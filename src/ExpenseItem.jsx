@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react'
 
 const ExpenseItem = React.memo(({ owner, item, updateRow, deleteRow }) => {
-  const [localAmount, setLocalAmount] = useState(item.amount === 0 ? '' : String(item.amount))
+  const fmt = (num) => new Intl.NumberFormat('ko-KR').format(Math.round(num))
+  const [localAmount, setLocalAmount] = useState(item.amount === 0 ? '' : fmt(item.amount))
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [pressTimer, setPressTimer] = useState(null)
   const inputRef = useRef(null)
@@ -9,26 +10,31 @@ const ExpenseItem = React.memo(({ owner, item, updateRow, deleteRow }) => {
   // item.amount가 외부에서 변경될 때만 localAmount 업데이트
   useEffect(() => {
     if (document.activeElement !== inputRef.current) {
-      setLocalAmount(item.amount === 0 ? '' : String(item.amount))
+      setLocalAmount(item.amount === 0 ? '' : fmt(item.amount))
     }
   }, [item.amount])
 
   const handleAmountChange = (e) => {
     const value = e.target.value
+    // 콤마 제거하고 숫자만 추출
+    const numericValue = value.replace(/[,\s]/g, '')
     
     // 숫자만 허용 (계산기 자판용)
-    if (value === '' || /^\d+$/.test(value)) {
-      setLocalAmount(value)
-      updateRow(owner, item.id, 'amount', value === '' ? 0 : parseInt(value))
+    if (numericValue === '' || /^\d+$/.test(numericValue)) {
+      const parsedValue = numericValue === '' ? 0 : parseInt(numericValue)
+      setLocalAmount(parsedValue === 0 ? '' : fmt(parsedValue))
+      updateRow(owner, item.id, 'amount', parsedValue)
     }
   }
 
   const handleAmountBlur = () => {
     // 포커스를 잃을 때 최종 값 동기화
-    const numericValue = localAmount === '' ? 0 : parseInt(localAmount)
+    const numericValue = localAmount === '' ? 0 : parseInt(localAmount.replace(/[,\s]/g, ''))
     if (numericValue !== item.amount) {
       updateRow(owner, item.id, 'amount', numericValue)
     }
+    // 포맷팅된 값으로 업데이트
+    setLocalAmount(numericValue === 0 ? '' : fmt(numericValue))
   }
 
   const handleLongPressStart = (e) => {

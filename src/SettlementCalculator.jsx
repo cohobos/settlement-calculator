@@ -39,32 +39,17 @@ export default function SettlementCalculator() {
   // 데이터 로드
   useEffect(() => {
     const loadData = async () => {
-      // 즉시 기본 데이터 표시
-      setMine([
-        { id: 'rent', name: '월세', amount: 250000, fixed: true },
-        { id: 'mgmt', name: '관리비', amount: 170000, fixed: true },
-        { id: 'water', name: '수도(물)', amount: 10000, fixed: false },
-        { id: 'gas', name: '가스', amount: 15300, fixed: false },
-        { id: 'elec', name: '전기', amount: 93620, fixed: false },
-        { id: 'jaewoo-total', name: '재우 총금액', amount: 365200, fixed: false },
-      ])
-      setSiblings([
-        { id: 'sib1', name: '재경 총금액', amount: 153089, fixed: false },
-      ])
-      setLoading(false) // 즉시 로딩 완료
-      
-      // 백그라운드에서 Firebase 데이터 시도 (재시도 로직 포함)
       try {
-        setSaveStatus('☁️ 클라우드 연결 중...')
-        const data = await loadSettlementData() // 재시도 로직이 내장된 함수 사용
+        setSaveStatus('☁️ 데이터 로딩 중...')
+        const data = await loadSettlementData()
         
-        // Firebase 데이터가 있으면 업데이트
         setMine(data.mine)
         setSiblings(data.siblings)
-        setSaveStatus('✅ 클라우드 동기화 완료')
+        setLoading(false)
+        setSaveStatus('✅ 데이터 로드 완료')
         setTimeout(() => setSaveStatus(''), 3000)
       } catch (error) {
-        console.log('Firebase 연결 실패, 오프라인 모드로 작동')
+        setLoading(false)
         setSaveStatus('📱 오프라인 모드')
         setTimeout(() => setSaveStatus(''), 5000)
       }
@@ -76,12 +61,10 @@ export default function SettlementCalculator() {
   useEffect(() => {
     const loadMonthlyData = async () => {
       try {
-        console.log('월별 기록 로딩 시작...')
         const records = await getMonthlyRecords()
-        console.log('로드된 월별 기록:', records)
         setMonthlyRecords(records)
       } catch (error) {
-        console.log('월별 기록 로드 실패:', error)
+        // 월별 기록 로드 실패
       }
     }
     loadMonthlyData()
@@ -98,9 +81,8 @@ export default function SettlementCalculator() {
       try {
         // 백그라운드에서 조용히 저장 (상태 업데이트 최소화)
         await saveSettlementData(mineData, siblingsData)
-        console.log('✅ 데이터 자동 저장 완료')
       } catch (error) {
-        console.error('❌ 자동 저장 실패:', error)
+        // 자동 저장 실패
       }
     }, 2000), // 더 긴 debounce로 입력 중 방해 최소화
     []
@@ -151,7 +133,6 @@ export default function SettlementCalculator() {
       
       setTimeout(() => setSaveStatus(''), 3000)
     } catch (error) {
-      console.error('월별 기록 저장 실패:', error)
       setSaveStatus('❌ 월별 기록 저장 실패')
       setTimeout(() => setSaveStatus(''), 5000)
     }

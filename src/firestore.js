@@ -18,18 +18,13 @@ const COLLECTION_NAME = 'settlements'
 // 기본 정산 데이터 ID (단일 사용자용)
 const DEFAULT_DOC_ID = 'default'
 
-// 기본 정산 데이터 구조
+// 기본 정산 데이터 구조 (빈 데이터)
 const defaultSettlementData = {
   mine: [
-    { id: 'rent', name: '월세', amount: 250000, fixed: true },
-    { id: 'mgmt', name: '관리비', amount: 170000, fixed: true },
-    { id: 'water', name: '수도(물)', amount: 10000, fixed: false },
-    { id: 'gas', name: '가스', amount: 15300, fixed: false },
-    { id: 'elec', name: '전기', amount: 93620, fixed: false },
-    { id: 'jaewoo-total', name: '재우 총금액', amount: 365200, fixed: false },
+    { id: 'default-1', name: '항목 이름', amount: 0, fixed: false }
   ],
   siblings: [
-    { id: 'sib1', name: '재경 총금액', amount: 153089, fixed: false },
+    { id: 'default-2', name: '항목 이름', amount: 0, fixed: false }
   ],
   lastUpdated: null
 }
@@ -40,7 +35,6 @@ const defaultSettlementData = {
 export const loadSettlementData = async (retries = 2) => {
   // Firebase가 초기화되지 않은 경우 기본 데이터 반환
   if (!db) {
-    console.warn('⚠️ Firebase 미초기화 - 기본 데이터 사용')
     return {
       mine: defaultSettlementData.mine,
       siblings: defaultSettlementData.siblings
@@ -49,19 +43,16 @@ export const loadSettlementData = async (retries = 2) => {
 
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      console.log(`🔄 Firebase 데이터 로드 시도 ${attempt}/${retries}`)
       const docRef = doc(db, COLLECTION_NAME, DEFAULT_DOC_ID)
       const docSnap = await getDoc(docRef)
       
       if (docSnap.exists()) {
         const data = docSnap.data()
-        console.log('✅ Firebase 데이터 로드 성공:', data)
         return {
           mine: data.mine || defaultSettlementData.mine,
           siblings: data.siblings || defaultSettlementData.siblings
         }
       } else {
-        console.log('📝 새 문서 생성 중...')
         // 문서가 없으면 기본 데이터로 초기화
         await saveSettlementData(defaultSettlementData.mine, defaultSettlementData.siblings)
         return {
@@ -70,10 +61,7 @@ export const loadSettlementData = async (retries = 2) => {
         }
       }
     } catch (error) {
-      console.error(`❌ 시도 ${attempt} 실패:`, error)
-      
       if (attempt === retries) {
-        console.error('🚫 모든 재시도 실패, 오프라인 모드로 전환')
         // 모든 재시도 실패 시 기본 데이터 반환
         return {
           mine: defaultSettlementData.mine,
@@ -93,26 +81,20 @@ export const loadSettlementData = async (retries = 2) => {
 export const saveSettlementData = async (mine, siblings, retries = 2) => {
   // Firebase가 초기화되지 않은 경우 저장 건너뛰기
   if (!db) {
-    console.warn('⚠️ Firebase 미초기화 - 저장 건너뛰기')
     return
   }
 
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      console.log(`💾 Firebase 데이터 저장 시도 ${attempt}/${retries}`)
       const docRef = doc(db, COLLECTION_NAME, DEFAULT_DOC_ID)
       await setDoc(docRef, {
         mine,
         siblings,
         lastUpdated: serverTimestamp()
       }, { merge: true })
-      console.log('✅ 정산 데이터 저장 완료')
       return // 성공 시 함수 종료
     } catch (error) {
-      console.error(`❌ 저장 시도 ${attempt} 실패:`, error)
-      
       if (attempt === retries) {
-        console.error('🚫 모든 저장 시도 실패')
         throw error // 마지막 시도 실패 시 에러 던지기
       }
       
@@ -142,7 +124,7 @@ export const subscribeToSettlementData = (callback) => {
       })
     }
   }, (error) => {
-    console.error('실시간 데이터 구독 오류:', error)
+    // 실시간 데이터 구독 오류
   })
 }
 
@@ -166,7 +148,6 @@ export const debounce = (func, wait) => {
  */
 export const checkConnectionStatus = async () => {
   if (!db) {
-    console.warn('⚠️ Firebase 미초기화')
     return false
   }
   
@@ -176,7 +157,6 @@ export const checkConnectionStatus = async () => {
     await getDoc(testDocRef)
     return true
   } catch (error) {
-    console.error('Firebase 연결 상태 확인 실패:', error)
     return false
   }
 }
@@ -201,7 +181,6 @@ export async function saveMonthlyRecord(yearMonth = null) {
       yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
     }
 
-    console.log(`📅 월별 기록 저장 시작: ${yearMonth}`)
 
     // 현재 정산 데이터를 먼저 가져오기 (재시도 로직 포함)
     const currentData = await loadSettlementData(3)
@@ -245,7 +224,6 @@ export async function saveMonthlyRecord(yearMonth = null) {
           setTimeout(() => reject(new Error('업데이트 시간 초과')), 15000)
         )
       ])
-      console.log(`✅ 월별 기록 업데이트 완료: ${yearMonth}`)
     } else {
       // 새 기록 생성
       await Promise.race([
@@ -257,10 +235,8 @@ export async function saveMonthlyRecord(yearMonth = null) {
           setTimeout(() => reject(new Error('생성 시간 초과')), 15000)
         )
       ])
-      console.log(`✅ 월별 기록 생성 완료: ${yearMonth}`)
     }
   } catch (error) {
-    console.error('❌ 월별 기록 저장 실패:', error)
     
     // 더 구체적인 에러 메시지 제공
     if (error.code === 'unavailable') {
@@ -298,188 +274,8 @@ export async function getMonthlyRecords(months = 12) {
     // 지정된 개월 수만큼만 반환
     return records.slice(0, months)
   } catch (error) {
-    console.error('월별 기록 불러오기 실패:', error)
     return []
   }
 }
 
-// 테스트용 여러 달 데이터 추가 함수
-export const addTestMonthlyData = async () => {
-  try {
-    console.log('테스트 월별 데이터 추가 중...')
-    
-    const testData = [
-      // 2024년 하반기
-      {
-        yearMonth: '2024-09',
-        timestamp: new Date('2024-09-15'),
-        totalMine: 180000,
-        totalSiblings: 180000,
-        settlementAmount: 0,
-        mine: [{ id: 'hug', name: 'hug', amount: 130000, fixed: false }, { id: 'rent', name: '월세', amount: 50000, fixed: true }],
-        siblings: [{ id: 'sib1', name: '재경 총금액', amount: 180000, fixed: false }]
-      },
-      {
-        yearMonth: '2024-10',
-        timestamp: new Date('2024-10-15'),
-        totalMine: 200000,
-        totalSiblings: 200000,
-        settlementAmount: 0,
-        mine: [{ id: 'hug', name: 'hug', amount: 150000, fixed: false }, { id: 'rent', name: '월세', amount: 50000, fixed: true }],
-        siblings: [{ id: 'sib1', name: '재경 총금액', amount: 200000, fixed: false }]
-      },
-      {
-        yearMonth: '2024-11',
-        timestamp: new Date('2024-11-15'),
-        totalMine: 220000,
-        totalSiblings: 220000,
-        settlementAmount: 0,
-        mine: [{ id: 'hug', name: 'hug', amount: 170000, fixed: false }, { id: 'rent', name: '월세', amount: 50000, fixed: true }],
-        siblings: [{ id: 'sib1', name: '재경 총금액', amount: 220000, fixed: false }]
-      },
-      {
-        yearMonth: '2024-12',
-        timestamp: new Date('2024-12-15'),
-        totalMine: 250000,
-        totalSiblings: 250000,
-        settlementAmount: 0,
-        mine: [{ id: 'hug', name: 'hug', amount: 200000, fixed: false }, { id: 'rent', name: '월세', amount: 50000, fixed: true }],
-        siblings: [{ id: 'sib1', name: '재경 총금액', amount: 250000, fixed: false }]
-      },
-      // 2025년
-      {
-        yearMonth: '2025-01',
-        timestamp: new Date('2025-01-15'),
-        totalMine: 170000,
-        totalSiblings: 170000,
-        settlementAmount: 0,
-        mine: [{ id: 'hug', name: 'hug', amount: 120000, fixed: false }, { id: 'rent', name: '월세', amount: 50000, fixed: true }],
-        siblings: [{ id: 'sib1', name: '재경 총금액', amount: 170000, fixed: false }]
-      },
-      {
-        yearMonth: '2025-02',
-        timestamp: new Date('2025-02-15'),
-        totalMine: 190000,
-        totalSiblings: 190000,
-        settlementAmount: 0,
-        mine: [{ id: 'hug', name: 'hug', amount: 140000, fixed: false }, { id: 'rent', name: '월세', amount: 50000, fixed: true }],
-        siblings: [{ id: 'sib1', name: '재경 총금액', amount: 190000, fixed: false }]
-      },
-      {
-        yearMonth: '2025-03',
-        timestamp: new Date('2025-03-15'),
-        totalMine: 210000,
-        totalSiblings: 210000,
-        settlementAmount: 0,
-        mine: [{ id: 'hug', name: 'hug', amount: 160000, fixed: false }, { id: 'rent', name: '월세', amount: 50000, fixed: true }],
-        siblings: [{ id: 'sib1', name: '재경 총금액', amount: 210000, fixed: false }]
-      },
-      {
-        yearMonth: '2025-04',
-        timestamp: new Date('2025-04-15'),
-        totalMine: 230000,
-        totalSiblings: 230000,
-        settlementAmount: 0,
-        mine: [{ id: 'hug', name: 'hug', amount: 180000, fixed: false }, { id: 'rent', name: '월세', amount: 50000, fixed: true }],
-        siblings: [{ id: 'sib1', name: '재경 총금액', amount: 230000, fixed: false }]
-      },
-      {
-        yearMonth: '2025-05',
-        timestamp: new Date('2025-05-15'),
-        totalMine: 160000,
-        totalSiblings: 160000,
-        settlementAmount: 0,
-        mine: [{ id: 'hug', name: 'hug', amount: 110000, fixed: false }, { id: 'rent', name: '월세', amount: 50000, fixed: true }],
-        siblings: [{ id: 'sib1', name: '재경 총금액', amount: 160000, fixed: false }]
-      },
-      {
-        yearMonth: '2025-06',
-        timestamp: new Date('2025-06-15'),
-        totalMine: 150000,
-        totalSiblings: 150000,
-        settlementAmount: 0,
-        mine: [{ id: 'hug', name: 'hug', amount: 100000, fixed: false }, { id: 'rent', name: '월세', amount: 50000, fixed: true }],
-        siblings: [{ id: 'sib1', name: '재경 총금액', amount: 150000, fixed: false }]
-      },
-      {
-        yearMonth: '2025-07',
-        timestamp: new Date('2025-07-15'),
-        totalMine: 200000,
-        totalSiblings: 200000,
-        settlementAmount: 0,
-        mine: [{ id: 'hug', name: 'hug', amount: 150000, fixed: false }, { id: 'rent', name: '월세', amount: 50000, fixed: true }],
-        siblings: [{ id: 'sib1', name: '재경 총금액', amount: 200000, fixed: false }]
-      },
-      {
-        yearMonth: '2025-08',
-        timestamp: new Date('2025-08-15'),
-        totalMine: 378000,
-        totalSiblings: 153089,
-        settlementAmount: (378000 - 153089) / 2, // 실제 정산금 112,456원
-        mine: [
-          { id: 'hug', name: 'hug', amount: 365200, fixed: false },
-          { id: 'rent', name: '월세', amount: 250000, fixed: true },
-          { id: 'mgmt', name: '관리비', amount: 170000, fixed: true },
-        ],
-        siblings: [{ id: 'sib1', name: '재경 총금액', amount: 153089, fixed: false }]
-      },
-      {
-        yearMonth: '2025-09',
-        timestamp: new Date('2025-09-15'),
-        totalMine: 538820,
-        totalSiblings: 153089,
-        settlementAmount: (538820 - 153089) / 2, // 실제 정산금 192,866원
-        mine: [
-          { id: 'rent', name: '월세', amount: 250000, fixed: true },
-          { id: 'mgmt', name: '관리비', amount: 170000, fixed: true },
-          { id: 'water', name: '수도(물)', amount: 9000, fixed: false },
-          { id: 'gas', name: '가스', amount: 15300, fixed: false },
-          { id: 'elec', name: '전기', amount: 93620, fixed: false },
-          { id: 'hug', name: 'hug', amount: 365200, fixed: false }
-        ],
-        siblings: [{ id: 'sib1', name: '재경(변동비)', amount: 153089, fixed: false }]
-      }
-    ]
-    
-    // 각 데이터를 Firestore에 추가
-    for (const data of testData) {
-      await addDoc(collection(db, 'monthly-records'), data)
-      console.log(`✅ ${data.yearMonth} 데이터 추가 완료`)
-    }
-    
-    console.log('🎉 모든 테스트 데이터 추가 완료!')
-    return testData
-  } catch (error) {
-    console.error('❌ 테스트 데이터 추가 실패:', error)
-    throw error
-  }
-}
-
-// 모든 월별 기록 삭제 (일회용)
-export async function deleteAllMonthlyRecords() {
-  try {
-    console.log('🗑️ 모든 월별 기록 삭제 시작...')
-    
-    const querySnapshot = await getDocs(collection(db, 'monthly-records'))
-    
-    if (querySnapshot.empty) {
-      console.log('삭제할 월별 기록이 없습니다.')
-      return
-    }
-    
-    const deletePromises = []
-    querySnapshot.forEach((doc) => {
-      deletePromises.push(deleteDoc(doc.ref))
-      console.log(`🗑️ ${doc.id} 삭제 예정`)
-    })
-    
-    await Promise.all(deletePromises)
-    
-    console.log(`✅ 총 ${deletePromises.length}개의 월별 기록 삭제 완료!`)
-    return deletePromises.length
-  } catch (error) {
-    console.error('❌ 월별 기록 삭제 실패:', error)
-    throw error
-  }
-}
 
