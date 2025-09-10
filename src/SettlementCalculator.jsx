@@ -148,7 +148,7 @@ export default function SettlementCalculator() {
   return (
     <div className="min-h-screen w-full bg-gray-50 text-gray-900">
       {/* 헤더 - 모바일 최적화 */}
-      <div className="!sticky !top-0 !bg-white !shadow-sm !border-b !px-8 !py-3 sm:!px-16 lg:!px-20 sm:!py-4">
+      <div className="!sticky !top-0 !bg-white !shadow-sm !border-b !px-12 !py-3 sm:!px-24 lg:!px-32 sm:!py-4">
         <div className="!max-w-4xl !mx-auto">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
@@ -169,7 +169,7 @@ export default function SettlementCalculator() {
       </div>
       
       {/* 메인 콘텐츠 - 가로 여백 추가 */}
-      <div className="!max-w-4xl !mx-auto !px-8 sm:!px-16 lg:!px-20 !py-4 sm:!py-6 !pb-20">
+      <div className="!max-w-4xl !mx-auto !px-12 sm:!px-24 lg:!px-32 !py-4 sm:!py-6 !pb-20">
 
         <div className="!space-y-6 lg:!grid lg:!grid-cols-2 lg:!gap-8 lg:!space-y-0">
           {/* 한재우 명의 카드 */}
