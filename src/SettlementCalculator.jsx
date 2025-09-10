@@ -240,42 +240,73 @@ export default function SettlementCalculator() {
   }
 
   const field = (owner, row) => (
-    <div key={row.id} className="space-y-2 p-3 bg-gray-50 rounded-lg">
+    <div key={row.id} className="group p-4 bg-white/50 backdrop-blur-sm rounded-2xl border border-gray-200/50 hover:border-gray-300/50 hover:shadow-md transition-all duration-200">
       {/* 모바일: 세로 레이아웃, 데스크톱: 가로 레이아웃 */}
-      <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-        <input
-          className="flex-1 px-3 py-3 sm:py-2 text-base sm:text-sm rounded-xl border-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          value={row.name}
-          onChange={e => updateRow(owner, row.id, { name: e.target.value })}
-          placeholder="항목명"
-        />
-        <div className="flex gap-2 items-center">
+      <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+        {/* 항목명 입력 */}
+        <div className="flex-1 relative">
           <input
-            type="tel"
-            className="flex-1 sm:w-32 text-right px-3 py-3 sm:py-2 text-base sm:text-sm rounded-xl border-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            inputMode="decimal"
-            pattern="[0-9]*"
-            value={row.amount.toString()}
-            onChange={e => {
-              const v = e.target.value.replace(/[^0-9]/g, '')
-              updateRow(owner, row.id, { amount: Number(v || 0) })
-            }}
-            placeholder="금액"
+            className="w-full px-4 py-3 text-base sm:text-sm rounded-xl border border-gray-200 bg-white/80 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400 transition-all duration-200 placeholder-gray-400"
+            value={row.name}
+            onChange={e => updateRow(owner, row.id, { name: e.target.value })}
+            placeholder="항목명을 입력하세요"
           />
-          <label className="flex items-center gap-1 text-sm text-gray-600 select-none cursor-pointer whitespace-nowrap">
+          {row.name && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 w-2 h-2 bg-green-400 rounded-full opacity-60"></div>
+          )}
+        </div>
+        
+        <div className="flex gap-3 items-center">
+          {/* 금액 입력 */}
+          <div className="relative">
             <input
-              type="checkbox"
-              className="w-4 h-4"
-              checked={row.fixed}
-              onChange={e => updateRow(owner, row.id, { fixed: e.target.checked })}
+              type="tel"
+              className="w-32 text-right px-4 py-3 text-base sm:text-sm rounded-xl border border-gray-200 bg-white/80 focus:outline-none focus:ring-2 focus:ring-blue-400/50 focus:border-blue-400 transition-all duration-200 placeholder-gray-400"
+              inputMode="decimal"
+              pattern="[0-9]*"
+              value={row.amount.toString()}
+              onChange={e => {
+                const v = e.target.value.replace(/[^0-9]/g, '')
+                updateRow(owner, row.id, { amount: Number(v || 0) })
+              }}
+              placeholder="0"
             />
-            고정
+            <div className="absolute right-1 top-1/2 -translate-y-1/2 text-xs text-gray-400 pointer-events-none">원</div>
+          </div>
+          
+          {/* 고정 체크박스 */}
+          <label className="flex items-center gap-2 text-sm text-gray-600 select-none cursor-pointer whitespace-nowrap group-hover:text-gray-700 transition-colors">
+            <div className="relative">
+              <input
+                type="checkbox"
+                className="sr-only"
+                checked={row.fixed}
+                onChange={e => updateRow(owner, row.id, { fixed: e.target.checked })}
+              />
+              <div className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all duration-200 ${
+                row.fixed 
+                  ? 'bg-blue-500 border-blue-500 shadow-sm' 
+                  : 'border-gray-300 hover:border-blue-400'
+              }`}>
+                {row.fixed && (
+                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </div>
+            </div>
+            <span className="font-medium">고정</span>
           </label>
+          
+          {/* 삭제 버튼 */}
           <button
-            className="px-3 py-2 text-sm rounded-lg border-2 border-red-200 text-red-600 hover:bg-red-50 active:bg-red-100 transition-colors min-w-[50px]"
+            className="group/btn p-2.5 rounded-xl border border-red-200 text-red-500 hover:bg-red-50 hover:border-red-300 hover:text-red-600 active:scale-95 transition-all duration-200 min-w-[44px]"
             onClick={() => removeRow(owner, row.id)}
+            title="항목 삭제"
           >
-            삭제
+            <svg className="w-4 h-4 group-hover/btn:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
           </button>
         </div>
       </div>
@@ -295,22 +326,39 @@ export default function SettlementCalculator() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-gray-50 text-gray-900 m-0 p-0">
-      {/* 헤더 - 모바일 최적화 */}
-      <div className="sticky top-0 bg-white shadow-sm border-b border-gray-200 px-6 sm:px-12 py-3">
+    <div className="min-h-screen w-full bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 text-gray-900 m-0 p-0">
+      {/* 헤더 - 모던 그라디언트 디자인 */}
+      <div className="sticky top-0 bg-white/80 backdrop-blur-md shadow-lg border-b border-white/20 px-6 sm:px-12 py-4">
         <div className="max-w-2xl mx-auto">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">공과금/월세 정산 계산기</h1>
-            <p className="text-xs sm:text-sm text-gray-600 mt-1">규칙: 정산금 = (재우 명의 − 재경 명의) / 2</p>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold text-lg">💰</span>
+              </div>
+              <div>
+                <h1 className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                  공과금/월세 정산 계산기
+                </h1>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1 flex items-center gap-1">
+                  <span className="inline-block w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+                  정산금 = (재우 명의 − 재경 명의) ÷ 2
+                </p>
+              </div>
             </div>
             {saveStatus && (
-              <div className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium ${
-                saveStatus.includes('실패') ? 'bg-red-100 text-red-600' : 
-                saveStatus.includes('완료') ? 'bg-green-100 text-green-600' : 
-                'bg-yellow-100 text-yellow-600'
+              <div className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-medium shadow-lg backdrop-blur-sm transition-all duration-300 ${
+                saveStatus.includes('실패') ? 'bg-red-100/80 text-red-700 border border-red-200' : 
+                saveStatus.includes('완료') ? 'bg-emerald-100/80 text-emerald-700 border border-emerald-200' : 
+                'bg-amber-100/80 text-amber-700 border border-amber-200'
               }`}>
-                {saveStatus}
+                <div className="flex items-center gap-2">
+                  <span className={`inline-block w-2 h-2 rounded-full ${
+                    saveStatus.includes('실패') ? 'bg-red-500' : 
+                    saveStatus.includes('완료') ? 'bg-emerald-500' : 
+                    'bg-amber-500'
+                  }`}></span>
+                  {saveStatus}
+                </div>
               </div>
             )}
           </div>
@@ -320,106 +368,228 @@ export default function SettlementCalculator() {
       {/* 메인 콘텐츠 - 가로 여백 추가 */}
       <div className="max-w-2xl mx-auto px-6 sm:px-12 py-6 pb-20">
 
-        <div className="!space-y-6">
-          {/* 한재우 명의 카드 */}
-          <section className="!bg-white !rounded-2xl !shadow-sm !border !p-6 sm:!p-8">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-bold text-lg sm:text-xl text-gray-900">한재우 명의 항목</h2>
+        <div className="space-y-8">
+          {/* 한재우 명의 카드 - 개선된 디자인 */}
+          <section className="bg-white/70 backdrop-blur-sm rounded-3xl shadow-xl border border-white/50 p-6 sm:p-8 hover:shadow-2xl transition-all duration-300">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center shadow-md">
+                  <span className="text-white font-semibold text-sm">재우</span>
+                </div>
+                <div>
+                  <h2 className="font-bold text-lg sm:text-xl text-gray-900">한재우 명의 항목</h2>
+                  <p className="text-xs text-gray-500 mt-0.5">지출 항목을 관리하세요</p>
+                </div>
+              </div>
               <button 
                 onClick={() => addRow('mine')} 
-                className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-xl hover:bg-blue-700 active:bg-blue-800 transition-colors shadow-sm"
+                className="group px-4 py-2.5 text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 active:scale-95 transition-all duration-200 shadow-lg hover:shadow-xl"
               >
-                + 추가
+                <span className="flex items-center gap-2">
+                  <span className="text-lg group-hover:scale-110 transition-transform">+</span>
+                  <span>추가</span>
+                </span>
               </button>
             </div>
             <div className="space-y-3">
               {mine.map(r => field('mine', r))}
             </div>
-            <div className="mt-6 pt-4 border-t-2 border-gray-100">
-              <div className="text-right">
-                <span className="text-sm text-gray-600">합계</span>
-                <div className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{fmt(totalMine)}</div>
+            <div className="mt-8 pt-6 border-t border-gray-200/50">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-500 font-medium">합계</span>
+                <div className="text-right">
+                  <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+                    {fmt(totalMine)}
+                  </div>
+                  <div className="text-xs text-gray-400 mt-1">원</div>
+                </div>
               </div>
             </div>
           </section>
 
-          {/* 한재경 명의 카드 */}
-          <section className="!bg-white !rounded-2xl !shadow-sm !border !p-6 sm:!p-8">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-bold text-lg sm:text-xl text-gray-900">한재경 명의 항목</h2>
+          {/* 한재경 명의 카드 - 개선된 디자인 */}
+          <section className="bg-white/70 backdrop-blur-sm rounded-3xl shadow-xl border border-white/50 p-6 sm:p-8 hover:shadow-2xl transition-all duration-300">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center shadow-md">
+                  <span className="text-white font-semibold text-sm">재경</span>
+                </div>
+                <div>
+                  <h2 className="font-bold text-lg sm:text-xl text-gray-900">한재경 명의 항목</h2>
+                  <p className="text-xs text-gray-500 mt-0.5">지출 항목을 관리하세요</p>
+                </div>
+              </div>
               <button 
                 onClick={() => addRow('siblings')} 
-                className="px-4 py-2 text-sm font-medium bg-green-600 text-white rounded-xl hover:bg-green-700 active:bg-green-800 transition-colors shadow-sm"
+                className="group px-4 py-2.5 text-sm font-medium bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 active:scale-95 transition-all duration-200 shadow-lg hover:shadow-xl"
               >
-                + 추가
+                <span className="flex items-center gap-2">
+                  <span className="text-lg group-hover:scale-110 transition-transform">+</span>
+                  <span>추가</span>
+                </span>
               </button>
             </div>
             <div className="space-y-3">
               {siblings.map(r => field('siblings', r))}
             </div>
-            <div className="mt-6 pt-4 border-t-2 border-gray-100">
-              <div className="text-right">
-                <span className="text-sm text-gray-600">합계</span>
-                <div className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{fmt(totalSiblings)}</div>
+            <div className="mt-8 pt-6 border-t border-gray-200/50">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-500 font-medium">합계</span>
+                <div className="text-right">
+                  <div className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-emerald-600 to-emerald-800 bg-clip-text text-transparent">
+                    {fmt(totalSiblings)}
+                  </div>
+                  <div className="text-xs text-gray-400 mt-1">원</div>
+                </div>
               </div>
             </div>
           </section>
         </div>
 
-        {/* 결과 카드 - 모바일 최적화 */}
-        <section className="!bg-white !rounded-2xl !shadow-sm !border !p-6 sm:!p-8 !mt-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-bold text-lg sm:text-xl text-gray-900">정산 결과</h2>
-            <div className="flex flex-wrap gap-2">
+        {/* 정산 결과 카드 - 프리미엄 디자인 */}
+        <section className="bg-gradient-to-br from-white/80 to-gray-50/80 backdrop-blur-sm rounded-3xl shadow-2xl border border-white/60 p-6 sm:p-8 mt-8 hover:shadow-3xl transition-all duration-300">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-violet-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <span className="text-white font-bold text-lg">⚖️</span>
+              </div>
+              <div>
+                <h2 className="font-bold text-lg sm:text-xl text-gray-900">정산 결과</h2>
+                <p className="text-xs text-gray-500 mt-0.5">계산된 정산 금액을 확인하세요</p>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              {/* 주요 액션 버튼 */}
               <button 
                 onClick={saveCurrentMonth}
-                className="px-4 py-2 text-sm font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl border-none cursor-pointer shadow-sm transition-colors"
+                className="group flex items-center justify-center gap-2 px-5 py-3 text-sm font-semibold bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-xl border-none cursor-pointer shadow-lg hover:shadow-xl active:scale-95 transition-all duration-200"
               >
-                💾 이달 기록 저장
+                <span className="text-base group-hover:scale-110 transition-transform">💾</span>
+                <span>이달 기록 저장</span>
               </button>
-              <button 
-                onClick={() => debouncedSave(mine, siblings)}
-                className="px-4 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-xl border-none cursor-pointer shadow-sm transition-colors"
-              >
-                🔄 강제 저장 테스트
-              </button>
-              <button 
-                onClick={() => setShowHistory(!showHistory)}
-                className="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-xl border-none cursor-pointer shadow-sm transition-colors"
-              >
-                📊 {showHistory ? '기록 숨기기' : '월별 기록'}
-              </button>
-              <button 
-                onClick={() => setShowChart(!showChart)}
-                className="px-4 py-2 text-sm font-medium bg-purple-600 hover:bg-purple-700 text-white rounded-xl border-none cursor-pointer shadow-sm transition-colors"
-              >
-                📈 {showChart ? '차트 숨기기' : '추이 차트'}
-              </button>
+              
+              {/* 보조 버튼들 */}
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => setShowHistory(!showHistory)}
+                  className={`group flex items-center gap-2 px-4 py-3 text-sm font-medium rounded-xl border-none cursor-pointer shadow-md hover:shadow-lg active:scale-95 transition-all duration-200 ${
+                    showHistory 
+                      ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white' 
+                      : 'bg-white/80 text-blue-600 border border-blue-200 hover:bg-blue-50'
+                  }`}
+                >
+                  <span className="text-sm group-hover:scale-110 transition-transform">📊</span>
+                  <span className="hidden sm:inline">{showHistory ? '기록 숨기기' : '월별 기록'}</span>
+                </button>
+                
+                <button 
+                  onClick={() => setShowChart(!showChart)}
+                  className={`group flex items-center gap-2 px-4 py-3 text-sm font-medium rounded-xl border-none cursor-pointer shadow-md hover:shadow-lg active:scale-95 transition-all duration-200 ${
+                    showChart 
+                      ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white' 
+                      : 'bg-white/80 text-purple-600 border border-purple-200 hover:bg-purple-50'
+                  }`}
+                >
+                  <span className="text-sm group-hover:scale-110 transition-transform">📈</span>
+                  <span className="hidden sm:inline">{showChart ? '차트 숨기기' : '추이 차트'}</span>
+                </button>
+                
+                <button 
+                  onClick={() => debouncedSave(mine, siblings)}
+                  className="group flex items-center gap-2 px-4 py-3 text-sm font-medium bg-white/80 text-gray-600 border border-gray-200 hover:bg-gray-50 rounded-xl cursor-pointer shadow-md hover:shadow-lg active:scale-95 transition-all duration-200"
+                  title="개발용 테스트 버튼"
+                >
+                  <span className="text-sm group-hover:scale-110 transition-transform">🔄</span>
+                  <span className="hidden sm:inline">테스트</span>
+                </button>
+              </div>
             </div>
           </div>
           
-          {/* 모바일: 세로 배치, 데스크톱: 3단 배치 */}
-          <div className="space-y-4 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:gap-4 sm:space-y-0">
-            <div className="p-4 rounded-xl bg-blue-50 border-2 border-blue-100">
-              <div className="text-sm font-medium text-blue-700">한재우 명의 합계</div>
-              <div className="text-2xl font-bold text-blue-900 mt-2">{fmt(totalMine)}</div>
-            </div>
-            <div className="p-4 rounded-xl bg-green-50 border-2 border-green-100">
-              <div className="text-sm font-medium text-green-700">한재경 명의 합계</div>
-              <div className="text-2xl font-bold text-green-900 mt-2">{fmt(totalSiblings)}</div>
-            </div>
-            <div className={`p-4 rounded-xl border-2 sm:col-span-2 lg:col-span-1 ${
-              net >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'
-            }`}>
-              <div className={`text-sm font-medium ${
-                net >= 0 ? 'text-emerald-700' : 'text-rose-700'
-              }`}>
-                정산금 (재경→재우 / 음수면 재우가 지급)
+          {/* 정산 결과 카드들 - 개선된 디자인 */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
+            {/* 재우 명의 총액 */}
+            <div className="group p-6 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200/50 hover:shadow-lg transition-all duration-300">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">재우</span>
+                  </div>
+                  <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">총 지출</span>
+                </div>
+                <div className="w-2 h-2 bg-blue-500 rounded-full group-hover:scale-125 transition-transform"></div>
               </div>
-              <div className={`text-2xl sm:text-3xl font-bold mt-2 ${
-                net >= 0 ? 'text-emerald-600' : 'text-rose-600'
-              }`}>
-                {fmt(net)}
+              <div className="text-2xl font-bold text-blue-800 mb-1">{fmt(totalMine)}</div>
+              <div className="text-xs text-blue-500">원</div>
+            </div>
+
+            {/* 재경 명의 총액 */}
+            <div className="group p-6 rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100/50 border border-emerald-200/50 hover:shadow-lg transition-all duration-300">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">재경</span>
+                  </div>
+                  <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wide">총 지출</span>
+                </div>
+                <div className="w-2 h-2 bg-emerald-500 rounded-full group-hover:scale-125 transition-transform"></div>
+              </div>
+              <div className="text-2xl font-bold text-emerald-800 mb-1">{fmt(totalSiblings)}</div>
+              <div className="text-xs text-emerald-500">원</div>
+            </div>
+
+            {/* 정산 금액 - 하이라이트 */}
+            <div className={`group sm:col-span-2 lg:col-span-1 p-6 rounded-2xl border hover:shadow-xl transition-all duration-300 relative overflow-hidden ${
+              net >= 0 
+                ? 'bg-gradient-to-br from-violet-50 via-purple-50 to-pink-50 border-violet-200/50' 
+                : 'bg-gradient-to-br from-rose-50 via-red-50 to-pink-50 border-rose-200/50'
+            }`}>
+              <div className={`absolute top-0 right-0 w-20 h-20 rounded-full -translate-y-10 translate-x-10 ${
+                net >= 0 
+                  ? 'bg-gradient-to-br from-violet-200/30 to-purple-200/30' 
+                  : 'bg-gradient-to-br from-rose-200/30 to-red-200/30'
+              }`}></div>
+              <div className="relative">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${
+                      net >= 0 
+                        ? 'bg-gradient-to-r from-violet-500 to-purple-600' 
+                        : 'bg-gradient-to-r from-rose-500 to-red-600'
+                    }`}>
+                      <span className="text-white text-xs">⚖️</span>
+                    </div>
+                    <span className={`text-xs font-semibold uppercase tracking-wide ${
+                      net >= 0 ? 'text-violet-600' : 'text-rose-600'
+                    }`}>정산금</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className={`w-1.5 h-1.5 rounded-full group-hover:scale-125 transition-transform ${
+                      net >= 0 ? 'bg-violet-500' : 'bg-rose-500'
+                    }`}></div>
+                    <div className={`w-1.5 h-1.5 rounded-full group-hover:scale-125 transition-transform delay-75 ${
+                      net >= 0 ? 'bg-purple-500' : 'bg-red-500'
+                    }`}></div>
+                    <div className={`w-1.5 h-1.5 rounded-full group-hover:scale-125 transition-transform delay-150 ${
+                      net >= 0 ? 'bg-pink-500' : 'bg-pink-500'
+                    }`}></div>
+                  </div>
+                </div>
+                <div className={`text-3xl font-bold bg-clip-text text-transparent mb-1 ${
+                  net >= 0 
+                    ? 'bg-gradient-to-r from-violet-700 to-purple-700' 
+                    : 'bg-gradient-to-r from-rose-700 to-red-700'
+                }`}>
+                  {fmt(Math.abs(net))}
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className={`text-xs ${net >= 0 ? 'text-violet-500' : 'text-rose-500'}`}>원</div>
+                  <div className={`text-xs px-2 py-1 bg-white/60 font-medium rounded-full ${
+                    net >= 0 ? 'text-violet-700' : 'text-rose-700'
+                  }`}>
+                    {net >= 0 ? '재경 → 재우' : '재우 → 재경'}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
