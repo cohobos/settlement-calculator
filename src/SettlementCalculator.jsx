@@ -267,7 +267,7 @@ export default function SettlementCalculator() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-xl font-bold text-gray-800">🏠 정산 계산기</h1>
-              <p className="text-sm text-gray-500 mt-1">2인 반반 정산</p>
+
             </div>
             <div className="text-right">
               <div className="text-xs text-gray-400">이번 달</div>
@@ -328,7 +328,7 @@ export default function SettlementCalculator() {
           
           {/* 설명 텍스트 */}
           <div className="text-center text-white/70 text-xs mt-2">
-            💡 "이달 기록 저장"은 현재 입력된 실제 데이터를 저장합니다
+            
           </div>
         </div>
 
@@ -405,15 +405,18 @@ export default function SettlementCalculator() {
             left: 0, 
             right: 0, 
             bottom: 0, 
-            position: 'fixed' 
+            position: 'fixed',
+            padding: '1rem'
           }}
           onClick={() => setShowHistory(false)}
         >
           <div 
-            className="bg-white w-80 h-96 overflow-hidden"
+            className="bg-white w-80 h-96 overflow-hidden rounded-2xl shadow-2xl mx-4"
             onClick={(e) => e.stopPropagation()}
             style={{ 
-              animation: 'modalSlideUp 0.3s ease-out'
+              animation: 'modalSlideUp 0.3s ease-out',
+              maxWidth: 'calc(100vw - 2rem)',
+              maxHeight: 'calc(100vh - 2rem)'
             }}
           >
             {/* 모달 헤더 */}
@@ -430,11 +433,11 @@ export default function SettlementCalculator() {
             </div>
             
             {/* 모달 내용 */}
-            <div className="p-4 overflow-y-auto" style={{ maxHeight: 'calc(24rem - 80px)', backgroundColor: 'white', borderRadius: '0 0 8px 8px' }}>
+            <div className="overflow-y-auto" style={{ maxHeight: 'calc(24rem - 80px)', backgroundColor: 'white', borderRadius: '0 0 8px 8px', padding: '0.5rem' }}>
               {monthlyRecords.length > 0 ? (
                 <div className="space-y-3">
                   {monthlyRecords.map((record) => (
-                    <div key={record.yearMonth} className="p-3 bg-gray-50 rounded-xl">
+                    <div key={record.yearMonth} className="bg-gray-50 rounded-xl" style={{ padding: '0.75rem' }}>
                       <div className="flex items-center justify-between mb-2">
                         <div className="font-medium text-gray-800">{record.yearMonth}</div>
                         <div className={`font-bold ${record.settlementAmount > 0 ? 'text-blue-600' : record.settlementAmount < 0 ? 'text-red-600' : 'text-gray-600'}`}>
@@ -448,7 +451,7 @@ export default function SettlementCalculator() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center text-gray-500" style={{ paddingTop: '2rem', paddingBottom: '2rem' }}>
                   아직 저장된 월별 기록이 없습니다.
                 </div>
               )}
@@ -468,15 +471,18 @@ export default function SettlementCalculator() {
             left: 0, 
             right: 0, 
             bottom: 0, 
-            position: 'fixed' 
+            position: 'fixed',
+            padding: '1rem'
           }}
           onClick={() => setShowChart(false)}
         >
           <div 
-            className="bg-white w-96 h-96 overflow-hidden"
+            className="bg-white w-96 h-96 overflow-hidden rounded-2xl shadow-2xl mx-4"
             onClick={(e) => e.stopPropagation()}
             style={{ 
-              animation: 'modalSlideUp 0.3s ease-out'
+              animation: 'modalSlideUp 0.3s ease-out',
+              maxWidth: 'calc(100vw - 2rem)',
+              maxHeight: 'calc(100vh - 2rem)'
             }}
           >
             {/* 모달 헤더 */}
