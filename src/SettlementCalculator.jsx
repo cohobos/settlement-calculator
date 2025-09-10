@@ -1,5 +1,29 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react'
 import { loadSettlementData, saveSettlementData, debounce, saveMonthlyRecord, getMonthlyRecords } from './firestore.js'
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  BarElement,
+} from 'chart.js'
+import { Line, Bar } from 'react-chartjs-2'
+
+// Chart.js 컴포넌트 등록
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  BarElement
+)
 
 // 정산금(동생→나 양수 / 내가→동생 음수) = (내 명의 총합 - 동생 명의 총합) / 2
 export default function SettlementCalculator() {
@@ -8,7 +32,8 @@ export default function SettlementCalculator() {
   const [loading, setLoading] = useState(true)
   const [saveStatus, setSaveStatus] = useState('')
   const [monthlyRecords, setMonthlyRecords] = useState([])
-  const [showHistory, setShowHistory] = useState(false) // 저장 상태 표시
+  const [showHistory, setShowHistory] = useState(false)
+  const [showChart, setShowChart] = useState(false) // 저장 상태 표시
 
   // 데이터 로드
   useEffect(() => {
@@ -123,6 +148,97 @@ export default function SettlementCalculator() {
   useEffect(() => {
     loadMonthlyHistory()
   }, [])
+
+  // 차트 데이터 준비
+  const chartData = useMemo(() => {
+    if (monthlyRecords.length === 0) return null
+
+    // 데이터를 시간순으로 정렬 (오래된 순)
+    const sortedRecords = [...monthlyRecords].sort((a, b) => a.yearMonth.localeCompare(b.yearMonth))
+
+    const labels = sortedRecords.map(record => record.yearMonth)
+    const settlementAmounts = sortedRecords.map(record => record.settlementAmount)
+    const mineAmounts = sortedRecords.map(record => record.totalMine)
+    const siblingsAmounts = sortedRecords.map(record => record.totalSiblings)
+
+    return {
+      labels,
+      datasets: [
+        {
+          label: '정산금 (재경→재우)',
+          data: settlementAmounts,
+          borderColor: 'rgb(59, 130, 246)',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          tension: 0.3,
+          fill: true,
+        },
+        {
+          label: '한재우 명의 총합',
+          data: mineAmounts,
+          borderColor: 'rgb(16, 185, 129)',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          tension: 0.3,
+          fill: false,
+        },
+        {
+          label: '한재경 명의 총합',
+          data: siblingsAmounts,
+          borderColor: 'rgb(245, 101, 101)',
+          backgroundColor: 'rgba(245, 101, 101, 0.1)',
+          tension: 0.3,
+          fill: false,
+        },
+      ],
+    }
+  }, [monthlyRecords])
+
+  // 차트 옵션
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+      title: {
+        display: true,
+        text: '월별 정산 추이',
+        font: {
+          size: 16,
+          weight: 'bold'
+        }
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            const value = context.parsed.y
+            return `${context.dataset.label}: ${new Intl.NumberFormat('ko-KR', { 
+              style: 'currency', 
+              currency: 'KRW',
+              maximumFractionDigits: 0 
+            }).format(value)}`
+          }
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: false,
+        ticks: {
+          callback: function(value) {
+            return new Intl.NumberFormat('ko-KR', {
+              style: 'currency',
+              currency: 'KRW',
+              maximumFractionDigits: 0,
+              notation: 'compact'
+            }).format(value)
+          }
+        }
+      }
+    },
+    interaction: {
+      intersect: false,
+    },
+  }
 
   const field = (owner, row) => (
     <div key={row.id} className="space-y-2 p-3 bg-gray-50 rounded-lg">
@@ -273,7 +389,7 @@ export default function SettlementCalculator() {
         <section className="!bg-white !rounded-2xl !shadow-sm !border !p-6 sm:!p-8 !mt-8">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-bold text-lg sm:text-xl text-gray-900">정산 결과</h2>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button 
                 onClick={saveCurrentMonth}
                 style={{
@@ -309,6 +425,24 @@ export default function SettlementCalculator() {
                 onMouseOut={(e) => e.target.style.backgroundColor = '#3b82f6'}
               >
                 📊 {showHistory ? '기록 숨기기' : '월별 기록'}
+              </button>
+              <button 
+                onClick={() => setShowChart(!showChart)}
+                style={{
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  backgroundColor: '#8b5cf6',
+                  color: 'white',
+                  borderRadius: '12px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)'
+                }}
+                onMouseOver={(e) => e.target.style.backgroundColor = '#7c3aed'}
+                onMouseOut={(e) => e.target.style.backgroundColor = '#8b5cf6'}
+              >
+                📈 {showChart ? '차트 숨기기' : '추이 차트'}
               </button>
             </div>
           </div>
@@ -352,6 +486,54 @@ export default function SettlementCalculator() {
             </p>
           </div>
         </section>
+
+        {/* 차트 섹션 */}
+        {showChart && chartData && (
+          <section style={{
+            backgroundColor: 'white',
+            borderRadius: '1rem',
+            boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
+            border: '1px solid #e5e7eb',
+            padding: '24px 32px',
+            marginTop: '32px'
+          }}>
+            <div style={{ height: '400px', width: '100%' }}>
+              <Line data={chartData} options={chartOptions} />
+            </div>
+          </section>
+        )}
+
+        {/* 차트 데이터 없을 때 안내 */}
+        {showChart && !chartData && (
+          <section style={{
+            backgroundColor: 'white',
+            borderRadius: '1rem',
+            boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
+            border: '1px solid #e5e7eb',
+            padding: '24px 32px',
+            marginTop: '32px'
+          }}>
+            <div style={{ 
+              textAlign: 'center', 
+              color: '#6b7280', 
+              padding: '64px 0' 
+            }}>
+              <div style={{ fontSize: '48px', marginBottom: '16px' }}>📈</div>
+              <h3 style={{ 
+                fontWeight: 'bold', 
+                fontSize: '18px', 
+                color: '#111827',
+                marginBottom: '8px' 
+              }}>
+                차트를 표시할 데이터가 없습니다
+              </h3>
+              <p style={{ fontSize: '14px' }}>
+                월별 기록을 2개 이상 저장하면 추이 차트를 볼 수 있습니다.<br/>
+                "💾 이달 기록 저장" 버튼을 눌러 데이터를 쌓아보세요!
+              </p>
+            </div>
+          </section>
+        )}
 
         {/* 월별 기록 섹션 */}
         {showHistory && (
