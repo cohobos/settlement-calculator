@@ -129,7 +129,7 @@ export const debounce = (func, wait) => {
  * @param {string} yearMonth 년월 (YYYY-MM 형식)
  * @returns {Promise<void>}
  */
-async function saveMonthlyRecord(totalMine, totalSiblings, settlementAmount, yearMonth = null) {
+export async function saveMonthlyRecord(totalMine, totalSiblings, settlementAmount, yearMonth = null) {
   // 년월이 없으면 현재 년월 사용
   if (!yearMonth) {
     const now = new Date()
@@ -152,7 +152,7 @@ async function saveMonthlyRecord(totalMine, totalSiblings, settlementAmount, yea
  * @param {number} months 가져올 개월 수 (기본값: 12개월)
  * @returns {Promise<Array>}
  */
-async function getMonthlyRecords(months = 12) {
+export async function getMonthlyRecords(months = 12) {
   try {
     const recordsRef = collection(db, 'monthly-records')
     const querySnapshot = await getDocs(recordsRef)
@@ -173,11 +173,3 @@ async function getMonthlyRecords(months = 12) {
   }
 }
 
-export { 
-  loadSettlementData, 
-  saveSettlementData, 
-  debounce, 
-  defaultSettlementData,
-  saveMonthlyRecord,
-  getMonthlyRecords
-}
