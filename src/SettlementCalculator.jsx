@@ -145,8 +145,8 @@ export default function SettlementCalculator() {
   return (
     <div className="min-h-screen w-full bg-gray-50 text-gray-900">
       {/* 헤더 - 모바일 최적화 */}
-      <div className="sticky top-0 bg-white shadow-sm border-b px-6 py-3 sm:px-8 lg:px-12 sm:py-4">
-        <div className="max-w-4xl mx-auto">
+      <div className="!sticky !top-0 !bg-white !shadow-sm !border-b !px-6 !py-3 sm:!px-8 lg:!px-12 sm:!py-4">
+        <div className="!max-w-4xl !mx-auto">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
             <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">공과금/월세 정산 계산기</h1>
@@ -166,11 +166,11 @@ export default function SettlementCalculator() {
       </div>
       
       {/* 메인 콘텐츠 - 가로 여백 추가 */}
-      <div className="max-w-4xl mx-auto px-6 sm:px-8 lg:px-12 py-4 sm:py-6 pb-20">
+      <div className="!max-w-4xl !mx-auto !px-6 sm:!px-8 lg:!px-12 !py-4 sm:!py-6 !pb-20">
 
-        <div className="space-y-6 lg:grid lg:grid-cols-2 lg:gap-8 lg:space-y-0">
+        <div className="!space-y-6 lg:!grid lg:!grid-cols-2 lg:!gap-8 lg:!space-y-0">
           {/* 한재우 명의 카드 */}
-          <section className="bg-white rounded-2xl shadow-sm border p-6 sm:p-8">
+          <section className="!bg-white !rounded-2xl !shadow-sm !border !p-6 sm:!p-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-bold text-lg sm:text-xl text-gray-900">한재우 명의 항목</h2>
               <button 
@@ -192,7 +192,7 @@ export default function SettlementCalculator() {
           </section>
 
           {/* 한재경 명의 카드 */}
-          <section className="bg-white rounded-2xl shadow-sm border p-6 sm:p-8">
+          <section className="!bg-white !rounded-2xl !shadow-sm !border !p-6 sm:!p-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-bold text-lg sm:text-xl text-gray-900">한재경 명의 항목</h2>
               <button 
@@ -215,7 +215,7 @@ export default function SettlementCalculator() {
         </div>
 
         {/* 결과 카드 - 모바일 최적화 */}
-        <section className="bg-white rounded-2xl shadow-sm border p-6 sm:p-8 mt-8">
+        <section className="!bg-white !rounded-2xl !shadow-sm !border !p-6 sm:!p-8 !mt-8">
           <h2 className="font-bold text-lg sm:text-xl text-gray-900 mb-4">정산 결과</h2>
           
           {/* 모바일: 세로 배치, 데스크톱: 3단 배치 */}
