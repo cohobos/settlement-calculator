@@ -6,7 +6,9 @@ import {
   getDocs, 
   updateDoc, 
   onSnapshot,
-  serverTimestamp 
+  serverTimestamp,
+  addDoc,
+  deleteDoc
 } from 'firebase/firestore'
 import { db } from './firebase.js'
 
@@ -298,6 +300,186 @@ export async function getMonthlyRecords(months = 12) {
   } catch (error) {
     console.error('월별 기록 불러오기 실패:', error)
     return []
+  }
+}
+
+// 테스트용 여러 달 데이터 추가 함수
+export const addTestMonthlyData = async () => {
+  try {
+    console.log('테스트 월별 데이터 추가 중...')
+    
+    const testData = [
+      // 2024년 하반기
+      {
+        yearMonth: '2024-09',
+        timestamp: new Date('2024-09-15'),
+        totalMine: 180000,
+        totalSiblings: 180000,
+        settlementAmount: 0,
+        mine: [{ id: 'hug', name: 'hug', amount: 130000, fixed: false }, { id: 'rent', name: '월세', amount: 50000, fixed: true }],
+        siblings: [{ id: 'sib1', name: '재경 총금액', amount: 180000, fixed: false }]
+      },
+      {
+        yearMonth: '2024-10',
+        timestamp: new Date('2024-10-15'),
+        totalMine: 200000,
+        totalSiblings: 200000,
+        settlementAmount: 0,
+        mine: [{ id: 'hug', name: 'hug', amount: 150000, fixed: false }, { id: 'rent', name: '월세', amount: 50000, fixed: true }],
+        siblings: [{ id: 'sib1', name: '재경 총금액', amount: 200000, fixed: false }]
+      },
+      {
+        yearMonth: '2024-11',
+        timestamp: new Date('2024-11-15'),
+        totalMine: 220000,
+        totalSiblings: 220000,
+        settlementAmount: 0,
+        mine: [{ id: 'hug', name: 'hug', amount: 170000, fixed: false }, { id: 'rent', name: '월세', amount: 50000, fixed: true }],
+        siblings: [{ id: 'sib1', name: '재경 총금액', amount: 220000, fixed: false }]
+      },
+      {
+        yearMonth: '2024-12',
+        timestamp: new Date('2024-12-15'),
+        totalMine: 250000,
+        totalSiblings: 250000,
+        settlementAmount: 0,
+        mine: [{ id: 'hug', name: 'hug', amount: 200000, fixed: false }, { id: 'rent', name: '월세', amount: 50000, fixed: true }],
+        siblings: [{ id: 'sib1', name: '재경 총금액', amount: 250000, fixed: false }]
+      },
+      // 2025년
+      {
+        yearMonth: '2025-01',
+        timestamp: new Date('2025-01-15'),
+        totalMine: 170000,
+        totalSiblings: 170000,
+        settlementAmount: 0,
+        mine: [{ id: 'hug', name: 'hug', amount: 120000, fixed: false }, { id: 'rent', name: '월세', amount: 50000, fixed: true }],
+        siblings: [{ id: 'sib1', name: '재경 총금액', amount: 170000, fixed: false }]
+      },
+      {
+        yearMonth: '2025-02',
+        timestamp: new Date('2025-02-15'),
+        totalMine: 190000,
+        totalSiblings: 190000,
+        settlementAmount: 0,
+        mine: [{ id: 'hug', name: 'hug', amount: 140000, fixed: false }, { id: 'rent', name: '월세', amount: 50000, fixed: true }],
+        siblings: [{ id: 'sib1', name: '재경 총금액', amount: 190000, fixed: false }]
+      },
+      {
+        yearMonth: '2025-03',
+        timestamp: new Date('2025-03-15'),
+        totalMine: 210000,
+        totalSiblings: 210000,
+        settlementAmount: 0,
+        mine: [{ id: 'hug', name: 'hug', amount: 160000, fixed: false }, { id: 'rent', name: '월세', amount: 50000, fixed: true }],
+        siblings: [{ id: 'sib1', name: '재경 총금액', amount: 210000, fixed: false }]
+      },
+      {
+        yearMonth: '2025-04',
+        timestamp: new Date('2025-04-15'),
+        totalMine: 230000,
+        totalSiblings: 230000,
+        settlementAmount: 0,
+        mine: [{ id: 'hug', name: 'hug', amount: 180000, fixed: false }, { id: 'rent', name: '월세', amount: 50000, fixed: true }],
+        siblings: [{ id: 'sib1', name: '재경 총금액', amount: 230000, fixed: false }]
+      },
+      {
+        yearMonth: '2025-05',
+        timestamp: new Date('2025-05-15'),
+        totalMine: 160000,
+        totalSiblings: 160000,
+        settlementAmount: 0,
+        mine: [{ id: 'hug', name: 'hug', amount: 110000, fixed: false }, { id: 'rent', name: '월세', amount: 50000, fixed: true }],
+        siblings: [{ id: 'sib1', name: '재경 총금액', amount: 160000, fixed: false }]
+      },
+      {
+        yearMonth: '2025-06',
+        timestamp: new Date('2025-06-15'),
+        totalMine: 150000,
+        totalSiblings: 150000,
+        settlementAmount: 0,
+        mine: [{ id: 'hug', name: 'hug', amount: 100000, fixed: false }, { id: 'rent', name: '월세', amount: 50000, fixed: true }],
+        siblings: [{ id: 'sib1', name: '재경 총금액', amount: 150000, fixed: false }]
+      },
+      {
+        yearMonth: '2025-07',
+        timestamp: new Date('2025-07-15'),
+        totalMine: 200000,
+        totalSiblings: 200000,
+        settlementAmount: 0,
+        mine: [{ id: 'hug', name: 'hug', amount: 150000, fixed: false }, { id: 'rent', name: '월세', amount: 50000, fixed: true }],
+        siblings: [{ id: 'sib1', name: '재경 총금액', amount: 200000, fixed: false }]
+      },
+      {
+        yearMonth: '2025-08',
+        timestamp: new Date('2025-08-15'),
+        totalMine: 378000,
+        totalSiblings: 153089,
+        settlementAmount: (378000 - 153089) / 2, // 실제 정산금 112,456원
+        mine: [
+          { id: 'hug', name: 'hug', amount: 365200, fixed: false },
+          { id: 'rent', name: '월세', amount: 250000, fixed: true },
+          { id: 'mgmt', name: '관리비', amount: 170000, fixed: true },
+        ],
+        siblings: [{ id: 'sib1', name: '재경 총금액', amount: 153089, fixed: false }]
+      },
+      {
+        yearMonth: '2025-09',
+        timestamp: new Date('2025-09-15'),
+        totalMine: 538820,
+        totalSiblings: 153089,
+        settlementAmount: (538820 - 153089) / 2, // 실제 정산금 192,866원
+        mine: [
+          { id: 'rent', name: '월세', amount: 250000, fixed: true },
+          { id: 'mgmt', name: '관리비', amount: 170000, fixed: true },
+          { id: 'water', name: '수도(물)', amount: 9000, fixed: false },
+          { id: 'gas', name: '가스', amount: 15300, fixed: false },
+          { id: 'elec', name: '전기', amount: 93620, fixed: false },
+          { id: 'hug', name: 'hug', amount: 365200, fixed: false }
+        ],
+        siblings: [{ id: 'sib1', name: '재경(변동비)', amount: 153089, fixed: false }]
+      }
+    ]
+    
+    // 각 데이터를 Firestore에 추가
+    for (const data of testData) {
+      await addDoc(collection(db, 'monthly-records'), data)
+      console.log(`✅ ${data.yearMonth} 데이터 추가 완료`)
+    }
+    
+    console.log('🎉 모든 테스트 데이터 추가 완료!')
+    return testData
+  } catch (error) {
+    console.error('❌ 테스트 데이터 추가 실패:', error)
+    throw error
+  }
+}
+
+// 모든 월별 기록 삭제 (일회용)
+export async function deleteAllMonthlyRecords() {
+  try {
+    console.log('🗑️ 모든 월별 기록 삭제 시작...')
+    
+    const querySnapshot = await getDocs(collection(db, 'monthly-records'))
+    
+    if (querySnapshot.empty) {
+      console.log('삭제할 월별 기록이 없습니다.')
+      return
+    }
+    
+    const deletePromises = []
+    querySnapshot.forEach((doc) => {
+      deletePromises.push(deleteDoc(doc.ref))
+      console.log(`🗑️ ${doc.id} 삭제 예정`)
+    })
+    
+    await Promise.all(deletePromises)
+    
+    console.log(`✅ 총 ${deletePromises.length}개의 월별 기록 삭제 완료!`)
+    return deletePromises.length
+  } catch (error) {
+    console.error('❌ 월별 기록 삭제 실패:', error)
+    throw error
   }
 }
 

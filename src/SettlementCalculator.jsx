@@ -76,7 +76,9 @@ export default function SettlementCalculator() {
   useEffect(() => {
     const loadMonthlyData = async () => {
       try {
+        console.log('월별 기록 로딩 시작...')
         const records = await getMonthlyRecords()
+        console.log('로드된 월별 기록:', records)
         setMonthlyRecords(records)
       } catch (error) {
         console.log('월별 기록 로드 실패:', error)
@@ -89,7 +91,7 @@ export default function SettlementCalculator() {
   const totalSiblings = siblings.reduce((sum, r) => sum + r.amount, 0)
   const settlementAmount = (totalMine - totalSiblings) / 2
 
-  const fmt = (num) => new Intl.NumberFormat('ko-KR').format(num)
+  const fmt = (num) => new Intl.NumberFormat('ko-KR').format(Math.round(num))
 
   const debouncedSave = useCallback(
     debounce(async (mineData, siblingsData) => {
@@ -155,9 +157,10 @@ export default function SettlementCalculator() {
     }
   }
 
+
   // 차트 데이터 준비
-  const chartData = useMemo(() => {
-    if (monthlyRecords.length === 0) return null
+    const chartData = useMemo(() => {
+      if (monthlyRecords.length === 0) return null
 
     const sortedRecords = [...monthlyRecords].sort((a, b) => a.yearMonth.localeCompare(b.yearMonth))
     const labels = sortedRecords.map(record => record.yearMonth)
@@ -221,16 +224,42 @@ export default function SettlementCalculator() {
       }
     },
     scales: {
+      x: {
+        display: true,
+        title: {
+          display: true,
+          text: '년월',
+          font: {
+            size: 12,
+            weight: 'bold'
+          }
+        },
+        ticks: {
+          display: true,
+          font: {
+            size: 11
+          },
+          maxRotation: 45,
+          minRotation: 0,
+          autoSkip: false,
+          callback: function(value, index, ticks) {
+            return this.getLabelForValue(value);
+          }
+        }
+      },
       y: {
         beginAtZero: false,
+        title: {
+          display: true,
+          text: '금액',
+          font: {
+            size: 12,
+            weight: 'bold'
+          }
+        },
         ticks: {
           callback: function(value) {
-            return new Intl.NumberFormat('ko-KR', {
-              style: 'currency',
-              currency: 'KRW',
-              maximumFractionDigits: 0,
-              notation: 'compact'
-            }).format(value)
+            return new Intl.NumberFormat('ko-KR').format(Math.round(value)) + '원'
           }
         }
       }
@@ -295,25 +324,30 @@ export default function SettlementCalculator() {
           </div>
           
           {/* 액션 버튼들 */}
-          <div className="flex space-x-2">
+          <div className="flex space-x-2 mb-2">
             <button 
               onClick={saveCurrentMonth}
               className="flex-1 bg-white/20 hover:bg-white/30 rounded-xl py-3 px-4 text-center text-sm font-medium transition-colors"
             >
               💾 이달 기록 저장
             </button>
-            <button 
-              onClick={() => setShowHistory(!showHistory)}
-              className="flex-1 bg-white/20 hover:bg-white/30 rounded-xl py-3 px-4 text-center text-sm font-medium transition-colors"
-            >
-              📊 {showHistory ? '기록 숨기기' : '월별 기록'}
-            </button>
-            <button 
-              onClick={() => setShowChart(!showChart)}
-              className="flex-1 bg-white/20 hover:bg-white/30 rounded-xl py-3 px-4 text-center text-sm font-medium transition-colors"
-            >
-              📈 {showChart ? '차트 숨기기' : '추이 차트'}
-            </button>
+              <button 
+                onClick={() => setShowHistory(true)}
+                className="flex-1 bg-white/20 hover:bg-white/30 rounded-xl py-3 px-4 text-center text-sm font-medium transition-colors"
+              >
+                📊 월별 기록
+              </button>
+              <button 
+                onClick={() => setShowChart(true)}
+                className="flex-1 bg-white/20 hover:bg-white/30 rounded-xl py-3 px-4 text-center text-sm font-medium transition-colors"
+              >
+                📈 추이 차트
+              </button>
+          </div>
+          
+          {/* 설명 텍스트 */}
+          <div className="text-center text-white/70 text-xs mt-2">
+            💡 "이달 기록 저장"은 현재 입력된 실제 데이터를 저장합니다
           </div>
         </div>
 
@@ -322,7 +356,7 @@ export default function SettlementCalculator() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold">재우</span>
+                <span className="text-white font-bold"></span>
               </div>
               <div>
                 <h3 className="font-bold text-gray-800">한재우 명의</h3>
@@ -353,7 +387,7 @@ export default function SettlementCalculator() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold">재경</span>
+                <span className="text-white font-bold"></span>
               </div>
               <div>
                 <h3 className="font-bold text-gray-800">한재경 명의</h3>
@@ -379,95 +413,120 @@ export default function SettlementCalculator() {
           ))}
         </div>
 
-        {/* 월별 기록 모달 */}
-        {showHistory && (
+      {/* 월별 기록 모달 */}
+      {showHistory && (
+        <div 
+          className="fixed inset-0 flex items-center justify-center"
+          style={{ 
+            backgroundColor: 'rgba(0, 0, 0, 0.5)', 
+            zIndex: 10000, 
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            bottom: 0, 
+            position: 'fixed' 
+          }}
+          onClick={() => setShowHistory(false)}
+        >
           <div 
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
-            onClick={() => setShowHistory(false)}
+            className="bg-white w-80 h-96 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+            style={{ 
+              animation: 'modalSlideUp 0.3s ease-out'
+            }}
           >
-            <div 
-              className="bg-white rounded-2xl max-w-md w-full max-h-[80vh] overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* 모달 헤더 */}
-              <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                <h3 className="font-bold text-gray-800 text-lg flex items-center">
-                  📊 월별 정산 기록
-                </h3>
-                <button 
-                  onClick={() => setShowHistory(false)}
-                  className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center hover:bg-gray-200 transition-colors"
-                >
-                  ×
-                </button>
-              </div>
-              
-              {/* 모달 내용 */}
-              <div className="p-4 overflow-y-auto max-h-[60vh]">
-                {monthlyRecords.length > 0 ? (
-                  <div className="space-y-3">
-                    {monthlyRecords.map((record) => (
-                      <div key={record.yearMonth} className="p-3 bg-gray-50 rounded-xl">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="font-medium text-gray-800">{record.yearMonth}</div>
-                          <div className={`font-bold ${record.settlementAmount > 0 ? 'text-blue-600' : record.settlementAmount < 0 ? 'text-red-600' : 'text-gray-600'}`}>
-                            {record.settlementAmount > 0 ? '+' : ''}{fmt(Math.round(record.settlementAmount))}원
-                          </div>
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          재우: {fmt(record.totalMine)}원 | 재경: {fmt(record.totalSiblings)}원
+            {/* 모달 헤더 */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200" style={{ backgroundColor: 'white', borderRadius: '8px 8px 0 0' }}>
+              <h3 className="font-bold text-black text-lg flex items-center">
+                📊 월별 정산 기록
+              </h3>
+              <button 
+                onClick={() => setShowHistory(false)}
+                className="w-8 h-8 bg-gray-100 text-black flex items-center justify-center hover:bg-gray-200 transition-colors rounded-full"
+              >
+                ×
+              </button>
+            </div>
+            
+            {/* 모달 내용 */}
+            <div className="p-4 overflow-y-auto" style={{ maxHeight: 'calc(24rem - 80px)', backgroundColor: 'white', borderRadius: '0 0 8px 8px' }}>
+              {monthlyRecords.length > 0 ? (
+                <div className="space-y-3">
+                  {monthlyRecords.map((record) => (
+                    <div key={record.yearMonth} className="p-3 bg-gray-50 rounded-xl">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="font-medium text-gray-800">{record.yearMonth}</div>
+                        <div className={`font-bold ${record.settlementAmount > 0 ? 'text-blue-600' : record.settlementAmount < 0 ? 'text-red-600' : 'text-gray-600'}`}>
+                          {record.settlementAmount > 0 ? '+' : ''}{fmt(Math.round(record.settlementAmount))}원
                         </div>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    아직 저장된 월별 기록이 없습니다.
-                  </div>
-                )}
-              </div>
+                      <div className="text-sm text-gray-500">
+                        재우: {fmt(record.totalMine)}원 | 재경: {fmt(record.totalSiblings)}원
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  아직 저장된 월별 기록이 없습니다.
+                </div>
+              )}
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* 차트 모달 */}
-        {showChart && (
+      {/* 차트 모달 */}
+      {showChart && (
+        <div 
+          className="fixed inset-0 flex items-center justify-center"
+          style={{ 
+            backgroundColor: 'rgba(0, 0, 0, 0.5)', 
+            zIndex: 10000, 
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            bottom: 0, 
+            position: 'fixed' 
+          }}
+          onClick={() => setShowChart(false)}
+        >
           <div 
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
-            onClick={() => setShowChart(false)}
+            className="bg-white w-96 h-96 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+            style={{ 
+              animation: 'modalSlideUp 0.3s ease-out'
+            }}
           >
-            <div 
-              className="bg-white rounded-2xl max-w-lg w-full max-h-[80vh] overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* 모달 헤더 */}
-              <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                <h3 className="font-bold text-gray-800 text-lg flex items-center">
-                  📈 정산 추이 차트
-                </h3>
-                <button 
-                  onClick={() => setShowChart(false)}
-                  className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center hover:bg-gray-200 transition-colors"
-                >
-                  ×
-                </button>
-              </div>
-              
-              {/* 모달 내용 */}
-              <div className="p-4">
-                {chartData ? (
-                  <div className="h-80">
-                    <Line data={chartData} options={chartOptions} />
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    차트를 표시할 데이터가 없습니다.
-                  </div>
-                )}
-              </div>
+            {/* 모달 헤더 */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200" style={{ backgroundColor: 'white', borderRadius: '8px 8px 0 0' }}>
+              <h3 className="font-bold text-black text-lg flex items-center">
+                📈 정산 추이 차트
+              </h3>
+              <button 
+                onClick={() => setShowChart(false)}
+                className="w-8 h-8 bg-gray-100 text-black flex items-center justify-center hover:bg-gray-200 transition-colors rounded-full"
+              >
+                ×
+              </button>
+            </div>
+            
+            {/* 모달 내용 */}
+            <div className="p-4 overflow-y-auto" style={{ maxHeight: 'calc(24rem - 80px)', backgroundColor: 'white', borderRadius: '0 0 8px 8px' }}>
+              {chartData ? (
+                <div style={{ height: '240px', minHeight: '240px', backgroundColor: 'white', borderRadius: '8px', padding: '8px' }}>
+                  <Line data={chartData} options={chartOptions} />
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  차트를 표시할 데이터가 없습니다.
+                </div>
+              )}
             </div>
           </div>
-        )}
+        </div>
+      )}
+
       </div>
     </div>
   )
