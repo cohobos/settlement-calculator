@@ -12,12 +12,32 @@ export default function SettlementCalculator() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const data = await loadSettlementData()
+        // 타임아웃 설정 (5초)
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('타임아웃')), 5000)
+        )
+        
+        const dataPromise = loadSettlementData()
+        
+        const data = await Promise.race([dataPromise, timeoutPromise])
         setMine(data.mine)
         setSiblings(data.siblings)
       } catch (error) {
         console.error('데이터 로드 실패:', error)
-        setSaveStatus('데이터 로드 실패')
+        // 오류 시 기본 데이터 사용
+        setMine([
+          { id: 'rent', name: '월세', amount: 250000, fixed: true },
+          { id: 'mgmt', name: '관리비', amount: 170000, fixed: true },
+          { id: 'water', name: '수도(물)', amount: 10000, fixed: false },
+          { id: 'gas', name: '가스', amount: 15300, fixed: false },
+          { id: 'elec', name: '전기', amount: 93620, fixed: false },
+          { id: 'jaewoo-var', name: '재우(변동비)', amount: 365200, fixed: false },
+        ])
+        setSiblings([
+          { id: 'sib1', name: '재경(변동비)', amount: 153089, fixed: false },
+        ])
+        setSaveStatus('오프라인 모드')
+        setTimeout(() => setSaveStatus(''), 3000)
       } finally {
         setLoading(false)
       }
@@ -116,7 +136,7 @@ export default function SettlementCalculator() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mx-auto mb-6"></div>
           <div className="text-lg sm:text-xl font-medium text-gray-700">데이터 로딩 중...</div>
-          <div className="text-sm text-gray-500 mt-2">잠시만 기다려주세요</div>
+          <div className="text-sm text-gray-500 mt-2">Firebase 연결 중...</div>
         </div>
       </div>
     )
