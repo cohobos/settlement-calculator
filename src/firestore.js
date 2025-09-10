@@ -24,10 +24,10 @@ const defaultSettlementData = {
     { id: 'water', name: '수도(물)', amount: 10000, fixed: false },
     { id: 'gas', name: '가스', amount: 15300, fixed: false },
     { id: 'elec', name: '전기', amount: 93620, fixed: false },
-    { id: 'jaewoo-var', name: '재우(변동비)', amount: 365200, fixed: false },
+    { id: 'jaewoo-total', name: '재우 총금액', amount: 365200, fixed: false },
   ],
   siblings: [
-    { id: 'sib1', name: '재경(변동비)', amount: 153089, fixed: false },
+    { id: 'sib1', name: '재경 총금액', amount: 153089, fixed: false },
   ],
   lastUpdated: null
 }
