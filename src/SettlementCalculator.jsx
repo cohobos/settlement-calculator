@@ -150,7 +150,7 @@ export default function SettlementCalculator() {
     <div className="min-h-screen w-full bg-gray-50 text-gray-900">
       {/* 헤더 - 모바일 최적화 */}
       <div className="!sticky !top-0 !bg-white !shadow-sm !border-b !px-12 !py-3 sm:!px-24 lg:!px-32 sm:!py-4">
-        <div className="!max-w-4xl !mx-auto">
+        <div className="!max-w-2xl !mx-auto">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
             <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">공과금/월세 정산 계산기</h1>
@@ -170,9 +170,9 @@ export default function SettlementCalculator() {
       </div>
       
       {/* 메인 콘텐츠 - 가로 여백 추가 */}
-      <div className="!max-w-4xl !mx-auto !px-12 sm:!px-24 lg:!px-32 !py-4 sm:!py-6 !pb-20">
+      <div className="!max-w-2xl !mx-auto !px-6 sm:!px-8 lg:!px-12 !py-4 sm:!py-6 !pb-20">
 
-        <div className="!space-y-6 lg:!grid lg:!grid-cols-2 lg:!gap-8 lg:!space-y-0">
+        <div className="!space-y-6">
           {/* 한재우 명의 카드 */}
           <section className="!bg-white !rounded-2xl !shadow-sm !border !p-6 sm:!p-8">
             <div className="flex items-center justify-between mb-4">
