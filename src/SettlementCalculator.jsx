@@ -103,8 +103,9 @@ export default function SettlementCalculator() {
         />
         <div className="flex gap-2 items-center">
           <input
+            type="tel"
             className="flex-1 sm:w-32 text-right px-3 py-3 sm:py-2 text-base sm:text-sm rounded-xl border-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            inputMode="numeric"
+            inputMode="decimal"
             pattern="[0-9]*"
             value={row.amount.toString()}
             onChange={e => {
