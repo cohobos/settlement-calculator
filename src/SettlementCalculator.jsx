@@ -69,133 +69,177 @@ export default function SettlementCalculator() {
   const fmt = n => new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW', maximumFractionDigits: 0 }).format(Math.round(n))
 
   const field = (owner, row) => (
-    <div key={row.id} className="flex gap-2 items-center">
-      <input
-        className="flex-1 px-3 py-2 rounded-xl border focus:outline-none focus:ring w-36"
-        value={row.name}
-        onChange={e => updateRow(owner, row.id, { name: e.target.value })}
-        placeholder="항목명"
-      />
-      <input
-        className="w-40 text-right px-3 py-2 rounded-xl border focus:outline-none focus:ring"
-        inputMode="numeric"
-        pattern="[0-9]*"
-        value={row.amount.toString()}
-        onChange={e => {
-          const v = e.target.value.replace(/[^0-9]/g, '')
-          updateRow(owner, row.id, { amount: Number(v || 0) })
-        }}
-        placeholder="금액"
-      />
-      <label className="flex items-center gap-1 text-xs text-gray-600 select-none cursor-pointer mr-1">
+    <div key={row.id} className="space-y-2 p-3 bg-gray-50 rounded-lg">
+      {/* 모바일: 세로 레이아웃, 데스크톱: 가로 레이아웃 */}
+      <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
         <input
-          type="checkbox"
-          checked={row.fixed}
-          onChange={e => updateRow(owner, row.id, { fixed: e.target.checked })}
+          className="flex-1 px-3 py-3 sm:py-2 text-base sm:text-sm rounded-xl border-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          value={row.name}
+          onChange={e => updateRow(owner, row.id, { name: e.target.value })}
+          placeholder="항목명"
         />
-        고정
-      </label>
-      <button
-        className="px-2 py-1 text-xs rounded-lg border hover:bg-red-50 text-red-600 border-red-200 transition"
-        onClick={() => removeRow(owner, row.id)}
-      >
-        삭제
-      </button>
+        <div className="flex gap-2 items-center">
+          <input
+            className="flex-1 sm:w-32 text-right px-3 py-3 sm:py-2 text-base sm:text-sm rounded-xl border-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={row.amount.toString()}
+            onChange={e => {
+              const v = e.target.value.replace(/[^0-9]/g, '')
+              updateRow(owner, row.id, { amount: Number(v || 0) })
+            }}
+            placeholder="금액"
+          />
+          <label className="flex items-center gap-1 text-sm text-gray-600 select-none cursor-pointer whitespace-nowrap">
+            <input
+              type="checkbox"
+              className="w-4 h-4"
+              checked={row.fixed}
+              onChange={e => updateRow(owner, row.id, { fixed: e.target.checked })}
+            />
+            고정
+          </label>
+          <button
+            className="px-3 py-2 text-sm rounded-lg border-2 border-red-200 text-red-600 hover:bg-red-50 active:bg-red-100 transition-colors min-w-[50px]"
+            onClick={() => removeRow(owner, row.id)}
+          >
+            삭제
+          </button>
+        </div>
+      </div>
     </div>
   )
 
   if (loading) {
     return (
-      <div className="min-h-screen w-full bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen w-full bg-gray-50 flex items-center justify-center p-4">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <div className="text-lg text-gray-600">데이터 로딩 중...</div>
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mx-auto mb-6"></div>
+          <div className="text-lg sm:text-xl font-medium text-gray-700">데이터 로딩 중...</div>
+          <div className="text-sm text-gray-500 mt-2">잠시만 기다려주세요</div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen w-full bg-gray-50 text-gray-900 p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold mb-2">공과금/월세 정산 계산기 (2인, 반반)</h1>
-            <p className="text-sm text-gray-600">규칙: 정산금 = (내 명의 총합 − 동생 명의 총합) / 2</p>
-          </div>
-          {saveStatus && (
-            <div className={`mt-4 md:mt-0 px-4 py-2 rounded-xl text-sm font-medium ${
-              saveStatus.includes('실패') ? 'bg-red-100 text-red-600' : 
-              saveStatus.includes('완료') ? 'bg-green-100 text-green-600' : 
-              'bg-yellow-100 text-yellow-600'
-            }`}>
-              {saveStatus}
+    <div className="min-h-screen w-full bg-gray-50 text-gray-900">
+      {/* 헤더 - 모바일 최적화 */}
+      <div className="sticky top-0 bg-white shadow-sm border-b px-6 py-3 sm:px-8 lg:px-12 sm:py-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">공과금/월세 정산 계산기</h1>
+            <p className="text-xs sm:text-sm text-gray-600 mt-1">규칙: 정산금 = (재우 명의 − 재경 명의) / 2</p>
             </div>
-          )}
+            {saveStatus && (
+              <div className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium ${
+                saveStatus.includes('실패') ? 'bg-red-100 text-red-600' : 
+                saveStatus.includes('완료') ? 'bg-green-100 text-green-600' : 
+                'bg-yellow-100 text-yellow-600'
+              }`}>
+                {saveStatus}
+              </div>
+            )}
+          </div>
         </div>
+      </div>
+      
+      {/* 메인 콘텐츠 - 가로 여백 추가 */}
+      <div className="max-w-4xl mx-auto px-6 sm:px-8 lg:px-12 py-4 sm:py-6 pb-20">
 
-        <div className="grid md:grid-cols-2 gap-6">
-          {/* 내 명의 카드 */}
-          <section className="bg-white rounded-2xl shadow p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold text-lg">내 명의 항목</h2>
+        <div className="space-y-6 lg:grid lg:grid-cols-2 lg:gap-8 lg:space-y-0">
+          {/* 한재우 명의 카드 */}
+          <section className="bg-white rounded-2xl shadow-sm border p-6 sm:p-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-bold text-lg sm:text-xl text-gray-900">한재우 명의 항목</h2>
               <button 
                 onClick={() => addRow('mine')} 
-                className="px-3 py-1.5 rounded-xl border hover:bg-gray-50 active:scale-[0.98] transition"
+                className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-xl hover:bg-blue-700 active:bg-blue-800 transition-colors shadow-sm"
               >
-                추가
+                + 추가
               </button>
             </div>
             <div className="space-y-3">
               {mine.map(r => field('mine', r))}
             </div>
-            <div className="mt-4 pt-3 border-t text-right font-semibold">합계: {fmt(totalMine)}</div>
+            <div className="mt-6 pt-4 border-t-2 border-gray-100">
+              <div className="text-right">
+                <span className="text-sm text-gray-600">합계</span>
+                <div className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{fmt(totalMine)}</div>
+              </div>
+            </div>
           </section>
 
-          {/* 동생 명의 카드 */}
-          <section className="bg-white rounded-2xl shadow p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-semibold text-lg">동생 명의 항목</h2>
+          {/* 한재경 명의 카드 */}
+          <section className="bg-white rounded-2xl shadow-sm border p-6 sm:p-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-bold text-lg sm:text-xl text-gray-900">한재경 명의 항목</h2>
               <button 
                 onClick={() => addRow('siblings')} 
-                className="px-3 py-1.5 rounded-xl border hover:bg-gray-50 active:scale-[0.98] transition"
+                className="px-4 py-2 text-sm font-medium bg-green-600 text-white rounded-xl hover:bg-green-700 active:bg-green-800 transition-colors shadow-sm"
               >
-                추가
+                + 추가
               </button>
             </div>
             <div className="space-y-3">
               {siblings.map(r => field('siblings', r))}
             </div>
-            <div className="mt-4 pt-3 border-t text-right font-semibold">합계: {fmt(totalSiblings)}</div>
+            <div className="mt-6 pt-4 border-t-2 border-gray-100">
+              <div className="text-right">
+                <span className="text-sm text-gray-600">합계</span>
+                <div className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{fmt(totalSiblings)}</div>
+              </div>
+            </div>
           </section>
         </div>
 
-        {/* 결과 카드 */}
-        <section className="bg-white rounded-2xl shadow p-4 mt-6">
-          <h2 className="font-semibold text-lg mb-3">정산 결과</h2>
-          <div className="grid md:grid-cols-3 gap-4">
-            <div className="p-3 rounded-xl border">
-              <div className="text-sm text-gray-500">내 명의 합계</div>
-              <div className="text-xl font-semibold">{fmt(totalMine)}</div>
+        {/* 결과 카드 - 모바일 최적화 */}
+        <section className="bg-white rounded-2xl shadow-sm border p-6 sm:p-8 mt-8">
+          <h2 className="font-bold text-lg sm:text-xl text-gray-900 mb-4">정산 결과</h2>
+          
+          {/* 모바일: 세로 배치, 데스크톱: 3단 배치 */}
+          <div className="space-y-4 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:gap-4 sm:space-y-0">
+            <div className="p-4 rounded-xl bg-blue-50 border-2 border-blue-100">
+              <div className="text-sm font-medium text-blue-700">한재우 명의 합계</div>
+              <div className="text-2xl font-bold text-blue-900 mt-2">{fmt(totalMine)}</div>
             </div>
-            <div className="p-3 rounded-xl border">
-              <div className="text-sm text-gray-500">동생 명의 합계</div>
-              <div className="text-xl font-semibold">{fmt(totalSiblings)}</div>
+            <div className="p-4 rounded-xl bg-green-50 border-2 border-green-100">
+              <div className="text-sm font-medium text-green-700">한재경 명의 합계</div>
+              <div className="text-2xl font-bold text-green-900 mt-2">{fmt(totalSiblings)}</div>
             </div>
-            <div className="p-3 rounded-xl border">
-              <div className="text-sm text-gray-500">정산금 (동생→나 / 음수면 내가 지급)</div>
-              <div className={`text-xl font-semibold ${net >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+            <div className={`p-4 rounded-xl border-2 sm:col-span-2 lg:col-span-1 ${
+              net >= 0 ? 'bg-emerald-50 border-emerald-200' : 'bg-rose-50 border-rose-200'
+            }`}>
+              <div className={`text-sm font-medium ${
+                net >= 0 ? 'text-emerald-700' : 'text-rose-700'
+              }`}>
+                정산금 (재경→재우 / 음수면 재우가 지급)
+              </div>
+              <div className={`text-2xl sm:text-3xl font-bold mt-2 ${
+                net >= 0 ? 'text-emerald-600' : 'text-rose-600'
+              }`}>
                 {fmt(net)}
               </div>
             </div>
           </div>
-          <p className="mt-3 text-sm text-gray-600">
-            • 양수이면 <b>동생이 나에게</b> 보내면 되고, 음수이면 <b>내가 동생에게</b> 보냅니다.
-          </p>
+          
+          <div className={`mt-6 p-6 rounded-xl ${
+            net >= 0 ? 'bg-emerald-50 border-2 border-emerald-200' : 'bg-rose-50 border-2 border-rose-200'
+          }`}>
+            <p className={`text-sm sm:text-base font-medium ${
+              net >= 0 ? 'text-emerald-800' : 'text-rose-800'
+            }`}>
+              {net >= 0 
+                ? `💰 재경이 재우에게 ${fmt(Math.abs(net))}을 보내면 됩니다.`
+                : `💸 재우가 재경에게 ${fmt(Math.abs(net))}을 보내면 됩니다.`
+              }
+            </p>
+          </div>
         </section>
 
-        <footer className="mt-6 text-xs text-gray-500">
-          * 금액은 원 단위 정수로 입력하세요. (쉼표 없이 숫자만)
+        <footer className="mt-8 text-center text-xs sm:text-sm text-gray-500 pb-4">
+          💡 금액은 원 단위 정수로 입력하세요 (쉼표 없이 숫자만)
         </footer>
       </div>
     </div>

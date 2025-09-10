@@ -18,15 +18,15 @@ const DEFAULT_DOC_ID = 'default'
 // 기본 정산 데이터 구조
 const defaultSettlementData = {
   mine: [
-    { id: 'hug', name: 'hug', amount: 365200, fixed: false },
     { id: 'rent', name: '월세', amount: 250000, fixed: true },
     { id: 'mgmt', name: '관리비', amount: 170000, fixed: true },
     { id: 'water', name: '수도(물)', amount: 10000, fixed: false },
     { id: 'gas', name: '가스', amount: 15300, fixed: false },
     { id: 'elec', name: '전기', amount: 93620, fixed: false },
+    { id: 'jaewoo-var', name: '재우(변동비)', amount: 365200, fixed: false },
   ],
   siblings: [
-    { id: 'sib1', name: '동생 명의 변동비', amount: 153089, fixed: false },
+    { id: 'sib1', name: '재경(변동비)', amount: 153089, fixed: false },
   ],
   lastUpdated: null
 }
