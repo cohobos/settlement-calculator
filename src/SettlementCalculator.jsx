@@ -52,24 +52,20 @@ export default function SettlementCalculator() {
       ])
       setLoading(false) // 즉시 로딩 완료
       
-      // 백그라운드에서 Firebase 데이터 시도
+      // 백그라운드에서 Firebase 데이터 시도 (재시도 로직 포함)
       try {
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('타임아웃')), 2000) // 2초로 단축
-        )
-        
-        const dataPromise = loadSettlementData()
-        const data = await Promise.race([dataPromise, timeoutPromise])
+        setSaveStatus('☁️ 클라우드 연결 중...')
+        const data = await loadSettlementData() // 재시도 로직이 내장된 함수 사용
         
         // Firebase 데이터가 있으면 업데이트
         setMine(data.mine)
         setSiblings(data.siblings)
-        setSaveStatus('클라우드 동기화 완료')
-        setTimeout(() => setSaveStatus(''), 2000)
+        setSaveStatus('✅ 클라우드 동기화 완료')
+        setTimeout(() => setSaveStatus(''), 3000)
       } catch (error) {
         console.log('Firebase 연결 실패, 오프라인 모드로 작동')
-        setSaveStatus('오프라인 모드')
-        setTimeout(() => setSaveStatus(''), 3000)
+        setSaveStatus('📱 오프라인 모드')
+        setTimeout(() => setSaveStatus(''), 5000)
       }
     }
     loadData()
@@ -79,14 +75,16 @@ export default function SettlementCalculator() {
   const debouncedSave = useCallback(
     debounce(async (mineData, siblingsData) => {
       try {
-        setSaveStatus('저장 중...')
+        console.log('🔄 Firebase 저장 시도:', { mineData, siblingsData })
+        setSaveStatus('☁️ 클라우드 저장 중...')
         await saveSettlementData(mineData, siblingsData)
-        setSaveStatus('저장 완료')
-        setTimeout(() => setSaveStatus(''), 2000)
-      } catch (error) {
-        console.error('저장 실패:', error)
-        setSaveStatus('저장 실패')
+        console.log('✅ Firebase 저장 완료')
+        setSaveStatus('✅ 클라우드 저장 완료')
         setTimeout(() => setSaveStatus(''), 3000)
+      } catch (error) {
+        console.error('❌ Firebase 저장 실패:', error)
+        setSaveStatus(`❌ 저장 실패: ${error.message}`)
+        setTimeout(() => setSaveStatus(''), 5000)
       }
     }, 1000),
     []
@@ -118,19 +116,20 @@ export default function SettlementCalculator() {
 
   const fmt = n => new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW', maximumFractionDigits: 0 }).format(Math.round(n))
 
-  // 월별 기록 저장
+  // 월별 기록 저장 (현재 데이터를 Firebase에서 실시간으로 가져와서 저장)
   const saveCurrentMonth = async () => {
     try {
+      console.log('월별 기록 저장 시작 - 현재 Firebase 데이터를 스냅샷으로 저장')
       setSaveStatus('월별 기록 저장 중...')
-      await saveMonthlyRecord(totalMine, totalSiblings, net)
-      setSaveStatus('월별 기록 저장 완료')
-      setTimeout(() => setSaveStatus(''), 2000)
+      await saveMonthlyRecord() // 파라미터 없이 호출하면 현재 월로 저장
+      setSaveStatus('월별 기록 저장 완료 ✅')
+      setTimeout(() => setSaveStatus(''), 3000)
       // 저장 후 기록 다시 불러오기
       loadMonthlyHistory()
     } catch (error) {
       console.error('월별 기록 저장 실패:', error)
-      setSaveStatus('월별 기록 저장 실패')
-      setTimeout(() => setSaveStatus(''), 3000)
+      setSaveStatus(`월별 기록 저장 실패: ${error.message}`)
+      setTimeout(() => setSaveStatus(''), 5000)
     }
   }
 
@@ -296,24 +295,10 @@ export default function SettlementCalculator() {
   }
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      width: '100%', 
-      backgroundColor: '#f9fafb', 
-      color: '#111827',
-      margin: 0, 
-      padding: 0 
-    }}>
+    <div className="min-h-screen w-full bg-gray-50 text-gray-900 m-0 p-0">
       {/* 헤더 - 모바일 최적화 */}
-      <div style={{
-        position: 'sticky',
-        top: 0,
-        backgroundColor: 'white',
-        boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
-        borderBottom: '1px solid #e5e7eb',
-        padding: '12px 48px'
-      }}>
-        <div style={{ maxWidth: '42rem', margin: '0 auto' }}>
+      <div className="sticky top-0 bg-white shadow-sm border-b border-gray-200 px-6 sm:px-12 py-3">
+        <div className="max-w-2xl mx-auto">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
             <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">공과금/월세 정산 계산기</h1>
@@ -333,11 +318,7 @@ export default function SettlementCalculator() {
       </div>
       
       {/* 메인 콘텐츠 - 가로 여백 추가 */}
-      <div style={{ 
-        maxWidth: '42rem', 
-        margin: '0 auto', 
-        padding: '24px 48px 80px 48px' 
-      }}>
+      <div className="max-w-2xl mx-auto px-6 sm:px-12 py-6 pb-20">
 
         <div className="!space-y-6">
           {/* 한재우 명의 카드 */}
@@ -392,55 +373,25 @@ export default function SettlementCalculator() {
             <div className="flex flex-wrap gap-2">
               <button 
                 onClick={saveCurrentMonth}
-                style={{
-                  padding: '8px 16px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  backgroundColor: '#059669',
-                  color: 'white',
-                  borderRadius: '12px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)'
-                }}
-                onMouseOver={(e) => e.target.style.backgroundColor = '#047857'}
-                onMouseOut={(e) => e.target.style.backgroundColor = '#059669'}
+                className="px-4 py-2 text-sm font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl border-none cursor-pointer shadow-sm transition-colors"
               >
                 💾 이달 기록 저장
               </button>
               <button 
+                onClick={() => debouncedSave(mine, siblings)}
+                className="px-4 py-2 text-sm font-medium bg-red-600 hover:bg-red-700 text-white rounded-xl border-none cursor-pointer shadow-sm transition-colors"
+              >
+                🔄 강제 저장 테스트
+              </button>
+              <button 
                 onClick={() => setShowHistory(!showHistory)}
-                style={{
-                  padding: '8px 16px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  backgroundColor: '#3b82f6',
-                  color: 'white',
-                  borderRadius: '12px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)'
-                }}
-                onMouseOver={(e) => e.target.style.backgroundColor = '#2563eb'}
-                onMouseOut={(e) => e.target.style.backgroundColor = '#3b82f6'}
+                className="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-xl border-none cursor-pointer shadow-sm transition-colors"
               >
                 📊 {showHistory ? '기록 숨기기' : '월별 기록'}
               </button>
               <button 
                 onClick={() => setShowChart(!showChart)}
-                style={{
-                  padding: '8px 16px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  backgroundColor: '#8b5cf6',
-                  color: 'white',
-                  borderRadius: '12px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)'
-                }}
-                onMouseOver={(e) => e.target.style.backgroundColor = '#7c3aed'}
-                onMouseOut={(e) => e.target.style.backgroundColor = '#8b5cf6'}
+                className="px-4 py-2 text-sm font-medium bg-purple-600 hover:bg-purple-700 text-white rounded-xl border-none cursor-pointer shadow-sm transition-colors"
               >
                 📈 {showChart ? '차트 숨기기' : '추이 차트'}
               </button>
@@ -489,15 +440,8 @@ export default function SettlementCalculator() {
 
         {/* 차트 섹션 */}
         {showChart && chartData && (
-          <section style={{
-            backgroundColor: 'white',
-            borderRadius: '1rem',
-            boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
-            border: '1px solid #e5e7eb',
-            padding: '24px 32px',
-            marginTop: '32px'
-          }}>
-            <div style={{ height: '400px', width: '100%' }}>
+          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-8 mt-8">
+            <div className="h-96 w-full">
               <Line data={chartData} options={chartOptions} />
             </div>
           </section>
@@ -505,29 +449,13 @@ export default function SettlementCalculator() {
 
         {/* 차트 데이터 없을 때 안내 */}
         {showChart && !chartData && (
-          <section style={{
-            backgroundColor: 'white',
-            borderRadius: '1rem',
-            boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
-            border: '1px solid #e5e7eb',
-            padding: '24px 32px',
-            marginTop: '32px'
-          }}>
-            <div style={{ 
-              textAlign: 'center', 
-              color: '#6b7280', 
-              padding: '64px 0' 
-            }}>
-              <div style={{ fontSize: '48px', marginBottom: '16px' }}>📈</div>
-              <h3 style={{ 
-                fontWeight: 'bold', 
-                fontSize: '18px', 
-                color: '#111827',
-                marginBottom: '8px' 
-              }}>
+          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-8 mt-8">
+            <div className="text-center text-gray-500 py-16">
+              <div className="text-5xl mb-4">📈</div>
+              <h3 className="font-bold text-lg text-gray-900 mb-2">
                 차트를 표시할 데이터가 없습니다
               </h3>
-              <p style={{ fontSize: '14px' }}>
+              <p className="text-sm">
                 월별 기록을 2개 이상 저장하면 추이 차트를 볼 수 있습니다.<br/>
                 "💾 이달 기록 저장" 버튼을 눌러 데이터를 쌓아보세요!
               </p>
@@ -537,79 +465,48 @@ export default function SettlementCalculator() {
 
         {/* 월별 기록 섹션 */}
         {showHistory && (
-          <section style={{
-            backgroundColor: 'white',
-            borderRadius: '1rem',
-            boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
-            border: '1px solid #e5e7eb',
-            padding: '24px 32px',
-            marginTop: '32px'
-          }}>
-            <h3 style={{ 
-              fontWeight: 'bold', 
-              fontSize: '18px', 
-              color: '#111827',
-              marginBottom: '16px' 
-            }}>
+          <section className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 sm:p-8 mt-8">
+            <h3 className="font-bold text-lg text-gray-900 mb-4">
               📈 월별 정산 기록 (최근 12개월)
             </h3>
             
             {monthlyRecords.length === 0 ? (
-              <div style={{ 
-                textAlign: 'center', 
-                color: '#6b7280', 
-                padding: '32px 0' 
-              }}>
-                아직 저장된 월별 기록이 없습니다.<br/>
-                위의 "💾 이달 기록 저장" 버튼을 눌러 기록을 저장해보세요.
+              <div className="text-center text-gray-500 py-8">
+                <p>아직 저장된 월별 기록이 없습니다.</p>
+                <p className="text-sm mt-2">위의 "💾 이달 기록 저장" 버튼을 눌러 기록을 저장해보세요.</p>
               </div>
             ) : (
-              <div style={{ 
-                display: 'grid', 
-                gap: '12px',
-                maxHeight: '400px',
-                overflowY: 'auto'
-              }}>
-                {monthlyRecords.map((record) => (
-                  <div key={record.id} style={{
-                    padding: '16px',
-                    backgroundColor: '#f9fafb',
-                    borderRadius: '12px',
-                    border: '1px solid #e5e7eb',
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr 1fr 1fr',
-                    gap: '12px',
-                    alignItems: 'center'
-                  }}>
-                    <div>
-                      <div style={{ fontSize: '14px', color: '#6b7280' }}>년월</div>
-                      <div style={{ fontWeight: '600', color: '#111827' }}>
-                        {record.yearMonth}
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '14px', color: '#3b82f6' }}>한재우</div>
-                      <div style={{ fontWeight: '600', color: '#1e40af' }}>
-                        {fmt(record.totalMine)}
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '14px', color: '#059669' }}>한재경</div>
-                      <div style={{ fontWeight: '600', color: '#047857' }}>
-                        {fmt(record.totalSiblings)}
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '14px', color: '#6b7280' }}>정산금</div>
-                      <div style={{ 
-                        fontWeight: 'bold', 
-                        color: record.settlementAmount >= 0 ? '#059669' : '#dc2626' 
-                      }}>
-                        {fmt(record.settlementAmount)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="overflow-x-auto max-h-96 overflow-y-auto">
+                <table className="w-full">
+                  <thead className="sticky top-0 bg-white">
+                    <tr className="border-b-2 border-gray-200">
+                      <th className="text-left py-3 px-4 font-semibold text-gray-900 bg-white">년월</th>
+                      <th className="text-right py-3 px-4 font-semibold text-blue-600 bg-white">한재우</th>
+                      <th className="text-right py-3 px-4 font-semibold text-emerald-600 bg-white">한재경</th>
+                      <th className="text-right py-3 px-4 font-semibold text-gray-900 bg-white">정산금</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {monthlyRecords.map((record, index) => (
+                      <tr key={record.id} className={`hover:bg-gray-50 transition-colors ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
+                        <td className="py-3 px-4 font-medium text-gray-900">
+                          {record.yearMonth}
+                        </td>
+                        <td className="py-3 px-4 text-right font-semibold text-blue-700">
+                          {fmt(record.totalMine)}
+                        </td>
+                        <td className="py-3 px-4 text-right font-semibold text-emerald-700">
+                          {fmt(record.totalSiblings)}
+                        </td>
+                        <td className={`py-3 px-4 text-right font-bold ${
+                          record.settlementAmount >= 0 ? 'text-emerald-600' : 'text-red-600'
+                        }`}>
+                          {fmt(record.settlementAmount)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </section>
