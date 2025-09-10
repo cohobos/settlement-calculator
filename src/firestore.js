@@ -2,7 +2,8 @@ import {
   collection, 
   doc, 
   getDoc, 
-  setDoc, 
+  setDoc,
+  getDocs, 
   updateDoc, 
   onSnapshot,
   serverTimestamp 
@@ -118,4 +119,65 @@ export const debounce = (func, wait) => {
     clearTimeout(timeout)
     timeout = setTimeout(later, wait)
   }
+}
+
+/**
+ * 월별 정산 기록을 Firestore에 저장
+ * @param {number} totalMine 한재우 명의 총합
+ * @param {number} totalSiblings 한재경 명의 총합
+ * @param {number} settlementAmount 정산금
+ * @param {string} yearMonth 년월 (YYYY-MM 형식)
+ * @returns {Promise<void>}
+ */
+async function saveMonthlyRecord(totalMine, totalSiblings, settlementAmount, yearMonth = null) {
+  // 년월이 없으면 현재 년월 사용
+  if (!yearMonth) {
+    const now = new Date()
+    yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  }
+
+  const docRef = doc(db, 'monthly-records', yearMonth)
+  await setDoc(docRef, {
+    yearMonth,
+    totalMine,
+    totalSiblings,
+    settlementAmount,
+    savedAt: new Date().toISOString(),
+  })
+  console.log(`월별 기록 저장 완료: ${yearMonth}`)
+}
+
+/**
+ * 월별 정산 기록들을 Firestore에서 불러오기
+ * @param {number} months 가져올 개월 수 (기본값: 12개월)
+ * @returns {Promise<Array>}
+ */
+async function getMonthlyRecords(months = 12) {
+  try {
+    const recordsRef = collection(db, 'monthly-records')
+    const querySnapshot = await getDocs(recordsRef)
+    
+    const records = []
+    querySnapshot.forEach((doc) => {
+      records.push({ id: doc.id, ...doc.data() })
+    })
+    
+    // 년월 기준으로 내림차순 정렬 (최신순)
+    records.sort((a, b) => b.yearMonth.localeCompare(a.yearMonth))
+    
+    // 지정된 개월 수만큼만 반환
+    return records.slice(0, months)
+  } catch (error) {
+    console.error('월별 기록 불러오기 실패:', error)
+    return []
+  }
+}
+
+export { 
+  loadSettlementData, 
+  saveSettlementData, 
+  debounce, 
+  defaultSettlementData,
+  saveMonthlyRecord,
+  getMonthlyRecords
 }

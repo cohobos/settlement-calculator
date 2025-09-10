@@ -1,12 +1,14 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react'
-import { loadSettlementData, saveSettlementData, debounce } from './firestore.js'
+import { loadSettlementData, saveSettlementData, debounce, saveMonthlyRecord, getMonthlyRecords } from './firestore.js'
 
 // 정산금(동생→나 양수 / 내가→동생 음수) = (내 명의 총합 - 동생 명의 총합) / 2
 export default function SettlementCalculator() {
   const [mine, setMine] = useState([])
   const [siblings, setSiblings] = useState([])
   const [loading, setLoading] = useState(true)
-  const [saveStatus, setSaveStatus] = useState('') // 저장 상태 표시
+  const [saveStatus, setSaveStatus] = useState('')
+  const [monthlyRecords, setMonthlyRecords] = useState([])
+  const [showHistory, setShowHistory] = useState(false) // 저장 상태 표시
 
   // 데이터 로드
   useEffect(() => {
@@ -90,6 +92,37 @@ export default function SettlementCalculator() {
   const net = useMemo(() => (totalMine - totalSiblings) / 2, [totalMine, totalSiblings])
 
   const fmt = n => new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW', maximumFractionDigits: 0 }).format(Math.round(n))
+
+  // 월별 기록 저장
+  const saveCurrentMonth = async () => {
+    try {
+      setSaveStatus('월별 기록 저장 중...')
+      await saveMonthlyRecord(totalMine, totalSiblings, net)
+      setSaveStatus('월별 기록 저장 완료')
+      setTimeout(() => setSaveStatus(''), 2000)
+      // 저장 후 기록 다시 불러오기
+      loadMonthlyHistory()
+    } catch (error) {
+      console.error('월별 기록 저장 실패:', error)
+      setSaveStatus('월별 기록 저장 실패')
+      setTimeout(() => setSaveStatus(''), 3000)
+    }
+  }
+
+  // 월별 기록 불러오기
+  const loadMonthlyHistory = async () => {
+    try {
+      const records = await getMonthlyRecords(12) // 최근 12개월
+      setMonthlyRecords(records)
+    } catch (error) {
+      console.error('월별 기록 불러오기 실패:', error)
+    }
+  }
+
+  // 컴포넌트 마운트 시 월별 기록도 불러오기
+  useEffect(() => {
+    loadMonthlyHistory()
+  }, [])
 
   const field = (owner, row) => (
     <div key={row.id} className="space-y-2 p-3 bg-gray-50 rounded-lg">
@@ -238,7 +271,47 @@ export default function SettlementCalculator() {
 
         {/* 결과 카드 - 모바일 최적화 */}
         <section className="!bg-white !rounded-2xl !shadow-sm !border !p-6 sm:!p-8 !mt-8">
-          <h2 className="font-bold text-lg sm:text-xl text-gray-900 mb-4">정산 결과</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-bold text-lg sm:text-xl text-gray-900">정산 결과</h2>
+            <div className="flex gap-2">
+              <button 
+                onClick={saveCurrentMonth}
+                style={{
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  backgroundColor: '#059669',
+                  color: 'white',
+                  borderRadius: '12px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)'
+                }}
+                onMouseOver={(e) => e.target.style.backgroundColor = '#047857'}
+                onMouseOut={(e) => e.target.style.backgroundColor = '#059669'}
+              >
+                💾 이달 기록 저장
+              </button>
+              <button 
+                onClick={() => setShowHistory(!showHistory)}
+                style={{
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  backgroundColor: '#3b82f6',
+                  color: 'white',
+                  borderRadius: '12px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)'
+                }}
+                onMouseOver={(e) => e.target.style.backgroundColor = '#2563eb'}
+                onMouseOut={(e) => e.target.style.backgroundColor = '#3b82f6'}
+              >
+                📊 {showHistory ? '기록 숨기기' : '월별 기록'}
+              </button>
+            </div>
+          </div>
           
           {/* 모바일: 세로 배치, 데스크톱: 3단 배치 */}
           <div className="space-y-4 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:gap-4 sm:space-y-0">
@@ -279,6 +352,86 @@ export default function SettlementCalculator() {
             </p>
           </div>
         </section>
+
+        {/* 월별 기록 섹션 */}
+        {showHistory && (
+          <section style={{
+            backgroundColor: 'white',
+            borderRadius: '1rem',
+            boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
+            border: '1px solid #e5e7eb',
+            padding: '24px 32px',
+            marginTop: '32px'
+          }}>
+            <h3 style={{ 
+              fontWeight: 'bold', 
+              fontSize: '18px', 
+              color: '#111827',
+              marginBottom: '16px' 
+            }}>
+              📈 월별 정산 기록 (최근 12개월)
+            </h3>
+            
+            {monthlyRecords.length === 0 ? (
+              <div style={{ 
+                textAlign: 'center', 
+                color: '#6b7280', 
+                padding: '32px 0' 
+              }}>
+                아직 저장된 월별 기록이 없습니다.<br/>
+                위의 "💾 이달 기록 저장" 버튼을 눌러 기록을 저장해보세요.
+              </div>
+            ) : (
+              <div style={{ 
+                display: 'grid', 
+                gap: '12px',
+                maxHeight: '400px',
+                overflowY: 'auto'
+              }}>
+                {monthlyRecords.map((record) => (
+                  <div key={record.id} style={{
+                    padding: '16px',
+                    backgroundColor: '#f9fafb',
+                    borderRadius: '12px',
+                    border: '1px solid #e5e7eb',
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr 1fr 1fr',
+                    gap: '12px',
+                    alignItems: 'center'
+                  }}>
+                    <div>
+                      <div style={{ fontSize: '14px', color: '#6b7280' }}>년월</div>
+                      <div style={{ fontWeight: '600', color: '#111827' }}>
+                        {record.yearMonth}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '14px', color: '#3b82f6' }}>한재우</div>
+                      <div style={{ fontWeight: '600', color: '#1e40af' }}>
+                        {fmt(record.totalMine)}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '14px', color: '#059669' }}>한재경</div>
+                      <div style={{ fontWeight: '600', color: '#047857' }}>
+                        {fmt(record.totalSiblings)}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '14px', color: '#6b7280' }}>정산금</div>
+                      <div style={{ 
+                        fontWeight: 'bold', 
+                        color: record.settlementAmount >= 0 ? '#059669' : '#dc2626' 
+                      }}>
+                        {fmt(record.settlementAmount)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
 
         <footer className="mt-8 text-center text-xs sm:text-sm text-gray-500 pb-4">
           💡 금액은 원 단위 정수로 입력하세요 (쉼표 없이 숫자만)
