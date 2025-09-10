@@ -147,10 +147,24 @@ export default function SettlementCalculator() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-gray-50 text-gray-900" style={{ margin: 0, padding: 0 }}>
+    <div style={{ 
+      minHeight: '100vh', 
+      width: '100%', 
+      backgroundColor: '#f9fafb', 
+      color: '#111827',
+      margin: 0, 
+      padding: 0 
+    }}>
       {/* 헤더 - 모바일 최적화 */}
-      <div className="!sticky !top-0 !bg-white !shadow-sm !border-b !px-12 !py-3 sm:!px-24 lg:!px-32 sm:!py-4">
-        <div className="!max-w-2xl !mx-auto">
+      <div style={{
+        position: 'sticky',
+        top: 0,
+        backgroundColor: 'white',
+        boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
+        borderBottom: '1px solid #e5e7eb',
+        padding: '12px 48px'
+      }}>
+        <div style={{ maxWidth: '42rem', margin: '0 auto' }}>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
             <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">공과금/월세 정산 계산기</h1>
@@ -170,7 +184,11 @@ export default function SettlementCalculator() {
       </div>
       
       {/* 메인 콘텐츠 - 가로 여백 추가 */}
-      <div className="!max-w-2xl !mx-auto !px-6 sm:!px-8 lg:!px-12 !py-4 sm:!py-6 !pb-20" style={{ margin: '0 auto', maxWidth: '42rem', padding: '1rem 3rem' }}>
+      <div style={{ 
+        maxWidth: '42rem', 
+        margin: '0 auto', 
+        padding: '24px 48px 80px 48px' 
+      }}>
 
         <div className="!space-y-6">
           {/* 한재우 명의 카드 */}
