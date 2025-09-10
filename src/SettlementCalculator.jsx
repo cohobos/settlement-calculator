@@ -11,35 +11,38 @@ export default function SettlementCalculator() {
   // 데이터 로드
   useEffect(() => {
     const loadData = async () => {
+      // 즉시 기본 데이터 표시
+      setMine([
+        { id: 'rent', name: '월세', amount: 250000, fixed: true },
+        { id: 'mgmt', name: '관리비', amount: 170000, fixed: true },
+        { id: 'water', name: '수도(물)', amount: 10000, fixed: false },
+        { id: 'gas', name: '가스', amount: 15300, fixed: false },
+        { id: 'elec', name: '전기', amount: 93620, fixed: false },
+        { id: 'jaewoo-var', name: '재우(변동비)', amount: 365200, fixed: false },
+      ])
+      setSiblings([
+        { id: 'sib1', name: '재경(변동비)', amount: 153089, fixed: false },
+      ])
+      setLoading(false) // 즉시 로딩 완료
+      
+      // 백그라운드에서 Firebase 데이터 시도
       try {
-        // 타임아웃 설정 (5초)
         const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('타임아웃')), 5000)
+          setTimeout(() => reject(new Error('타임아웃')), 2000) // 2초로 단축
         )
         
         const dataPromise = loadSettlementData()
-        
         const data = await Promise.race([dataPromise, timeoutPromise])
+        
+        // Firebase 데이터가 있으면 업데이트
         setMine(data.mine)
         setSiblings(data.siblings)
+        setSaveStatus('클라우드 동기화 완료')
+        setTimeout(() => setSaveStatus(''), 2000)
       } catch (error) {
-        console.error('데이터 로드 실패:', error)
-        // 오류 시 기본 데이터 사용
-        setMine([
-          { id: 'rent', name: '월세', amount: 250000, fixed: true },
-          { id: 'mgmt', name: '관리비', amount: 170000, fixed: true },
-          { id: 'water', name: '수도(물)', amount: 10000, fixed: false },
-          { id: 'gas', name: '가스', amount: 15300, fixed: false },
-          { id: 'elec', name: '전기', amount: 93620, fixed: false },
-          { id: 'jaewoo-var', name: '재우(변동비)', amount: 365200, fixed: false },
-        ])
-        setSiblings([
-          { id: 'sib1', name: '재경(변동비)', amount: 153089, fixed: false },
-        ])
+        console.log('Firebase 연결 실패, 오프라인 모드로 작동')
         setSaveStatus('오프라인 모드')
         setTimeout(() => setSaveStatus(''), 3000)
-      } finally {
-        setLoading(false)
       }
     }
     loadData()
@@ -145,7 +148,7 @@ export default function SettlementCalculator() {
   return (
     <div className="min-h-screen w-full bg-gray-50 text-gray-900">
       {/* 헤더 - 모바일 최적화 */}
-      <div className="!sticky !top-0 !bg-white !shadow-sm !border-b !px-6 !py-3 sm:!px-8 lg:!px-12 sm:!py-4">
+      <div className="!sticky !top-0 !bg-white !shadow-sm !border-b !px-8 !py-3 sm:!px-16 lg:!px-20 sm:!py-4">
         <div className="!max-w-4xl !mx-auto">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
@@ -166,7 +169,7 @@ export default function SettlementCalculator() {
       </div>
       
       {/* 메인 콘텐츠 - 가로 여백 추가 */}
-      <div className="!max-w-4xl !mx-auto !px-6 sm:!px-8 lg:!px-12 !py-4 sm:!py-6 !pb-20">
+      <div className="!max-w-4xl !mx-auto !px-8 sm:!px-16 lg:!px-20 !py-4 sm:!py-6 !pb-20">
 
         <div className="!space-y-6 lg:!grid lg:!grid-cols-2 lg:!gap-8 lg:!space-y-0">
           {/* 한재우 명의 카드 */}
